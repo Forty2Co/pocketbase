@@ -10,6 +10,9 @@ import (
 )
 
 func TestCollection_List(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	defaultClient := NewClient(defaultURL)
 
 	tests := []struct {
@@ -66,6 +69,9 @@ func TestCollection_List(t *testing.T) {
 }
 
 func TestCollection_Delete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/" + "collectionname"}
@@ -97,6 +103,9 @@ func TestCollection_Delete(t *testing.T) {
 }
 
 func TestCollection_Update(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/collectionname"}
@@ -134,6 +143,9 @@ func TestCollection_Update(t *testing.T) {
 }
 
 func TestCollection_Create(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	defaultClient := NewClient(defaultURL)
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
@@ -196,6 +208,9 @@ func TestCollection_Create(t *testing.T) {
 }
 
 func TestCollection_One(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/collectionname"}

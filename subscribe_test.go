@@ -11,6 +11,9 @@ import (
 )
 
 func TestCollection_Subscribe(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
@@ -76,6 +79,9 @@ func TestCollection_Subscribe(t *testing.T) {
 }
 
 func TestCollection_Unsubscribe(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
@@ -122,7 +128,11 @@ func TestCollection_RealtimeReconnect(t *testing.T) {
 			conn, err := net.Dial(network, addr)
 			if err == nil {
 				// Simulate pocketbase closing realtime connection after 5m of inactivity
-				time.AfterFunc(3*time.Second, func() { conn.Close() })
+				time.AfterFunc(3*time.Second, func() {
+					if closeErr := conn.Close(); closeErr != nil {
+						t.Logf("Failed to close connection: %v", closeErr)
+					}
+				})
 			}
 			return conn, err
 		},

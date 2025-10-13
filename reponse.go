@@ -1,5 +1,6 @@
 package pocketbase
 
+// ResponseList represents a paginated list response from PocketBase.
 type ResponseList[T any] struct {
 	Page       int `json:"page"`
 	PerPage    int `json:"perPage"`
@@ -8,6 +9,7 @@ type ResponseList[T any] struct {
 	Items      []T `json:"items"`
 }
 
+// ResponseCreate represents the response from creating a new record.
 type ResponseCreate struct {
 	ID      string `json:"id"`
 	Created string `json:"created"`

@@ -11,6 +11,9 @@ import (
 )
 
 func TestBackup_FullList(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("without authorization", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		resp, err := defaultClient.Backup().FullList()
@@ -43,6 +46,9 @@ func TestBackup_FullList(t *testing.T) {
 }
 
 func TestBackup_Create(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("without authorization", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		err := defaultClient.Backup().Create()
@@ -94,6 +100,9 @@ func TestBackup_Create(t *testing.T) {
 }
 
 func TestBackup_Delete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("without authorization", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		err := defaultClient.Backup().Delete("foobar")
@@ -132,6 +141,9 @@ func TestBackup_Delete(t *testing.T) {
 }
 
 func TestBackup_Restore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("without authorization", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		err := defaultClient.Backup().Restore("foobar")
@@ -164,6 +176,9 @@ func TestBackup_Restore(t *testing.T) {
 }
 
 func TestBackup_Upload(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("without authorization", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		err := defaultClient.Backup().Upload("foobar", bytes.NewReader([]byte{10}))
@@ -177,7 +192,11 @@ func TestBackup_Upload(t *testing.T) {
 
 		file, err := os.Open("./testressources/pb_backup.zip")
 		require.NoError(t, err)
-		defer file.Close()
+		defer func() {
+			if closeErr := file.Close(); closeErr != nil {
+				t.Logf("Failed to close file: %v", closeErr)
+			}
+		}()
 
 		err = defaultClient.Backup().Upload(backupName, file)
 		require.NoError(t, err)
@@ -192,6 +211,9 @@ func TestBackup_Upload(t *testing.T) {
 }
 
 func TestBackup_GetDownloadURL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("build URL with token and key", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		url, err := defaultClient.Backup().GetDownloadURL("token", "key")

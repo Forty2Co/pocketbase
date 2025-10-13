@@ -362,3 +362,54 @@ make test
 ```bash
 make test-unit  # Fast tests that don't require a server
 ```
+
+## Release Process
+
+This project uses semantic versioning and automated releases via GitHub Actions.
+
+### Version Management
+
+- **VERSION file** - Contains the current version (e.g., `0.2.0`)
+- **Git tags** - Used for releases (e.g., `v0.2.0`)
+- **Automatic builds** - Version info is injected into binaries
+
+### Creating a Release
+
+1. **Update version and changelog:**
+   ```bash
+   # Update VERSION file
+   echo "0.2.1" > VERSION
+   
+   # Update CHANGELOG.md with your changes
+   # Add new section for [0.2.1] with Added/Changed/Fixed
+   ```
+
+2. **Commit changes:**
+   ```bash
+   git add VERSION CHANGELOG.md
+   git commit -m "chore: bump version to 0.2.1"
+   git push origin master
+   ```
+
+3. **Create and push tag:**
+   ```bash
+   make tag-release
+   git push origin v0.2.1
+   ```
+
+4. **Automated release:**
+   - GitHub Actions automatically creates a release
+   - Builds binaries and attaches them to the release
+   - Release notes are generated from CHANGELOG.md
+
+### Version Strategy
+
+- **Patch** (0.2.1) - Bug fixes, documentation updates
+- **Minor** (0.3.0) - New features, API additions
+- **Major** (1.0.0) - Breaking changes
+
+### Checking Version
+
+```bash
+make version  # Shows current version, commit, build time
+```

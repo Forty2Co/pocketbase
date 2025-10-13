@@ -6,12 +6,14 @@ import (
 	"net/url"
 )
 
+// Collection represents a type-safe wrapper around a PocketBase collection.
 type Collection[T any] struct {
 	*Client
 	Name               string
 	BaseCollectionPath string
 }
 
+// CollectionSet creates a new type-safe collection wrapper for the specified collection.
 func CollectionSet[T any](client *Client, collection string) *Collection[T] {
 	return &Collection[T]{
 		Client:             client,
@@ -20,18 +22,22 @@ func CollectionSet[T any](client *Client, collection string) *Collection[T] {
 	}
 }
 
+// Update updates a record in the collection with the specified ID.
 func (c *Collection[T]) Update(id string, body T) error {
 	return c.Client.Update(c.Name, id, body)
 }
 
+// Create creates a new record in the collection.
 func (c *Collection[T]) Create(body T) (ResponseCreate, error) {
 	return c.Client.Create(c.Name, body)
 }
 
+// Delete removes a record from the collection by ID.
 func (c *Collection[T]) Delete(id string) error {
 	return c.Client.Delete(c.Name, id)
 }
 
+// List retrieves a paginated list of records from the collection.
 func (c *Collection[T]) List(params ParamsList) (ResponseList[T], error) {
 	var response ResponseList[T]
 	params.hackResponseRef = &response
@@ -40,6 +46,7 @@ func (c *Collection[T]) List(params ParamsList) (ResponseList[T], error) {
 	return response, err
 }
 
+// FullList retrieves all records from the collection without pagination.
 func (c *Collection[T]) FullList(params ParamsList) (ResponseList[T], error) {
 	var response ResponseList[T]
 	params.hackResponseRef = &response
@@ -48,6 +55,7 @@ func (c *Collection[T]) FullList(params ParamsList) (ResponseList[T], error) {
 	return response, err
 }
 
+// One retrieves a single record from the collection by ID.
 func (c *Collection[T]) One(id string) (T, error) {
 	var response T
 
@@ -79,7 +87,8 @@ func (c *Collection[T]) One(id string) (T, error) {
 	return response, nil
 }
 
-// Get one record with params (only fields and expand supported)
+// OneWithParams retrieves a single record from the collection by ID with additional parameters.
+// Only fields and expand parameters are supported.
 func (c *Collection[T]) OneWithParams(id string, params ParamsList) (T, error) {
 	var response T
 

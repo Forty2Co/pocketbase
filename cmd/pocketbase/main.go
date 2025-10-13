@@ -1,3 +1,7 @@
+// Package main provides the PocketBase server executable.
+//
+// This is the main entry point for running a PocketBase server instance
+// with custom migrations and configurations.
 package main
 
 import (

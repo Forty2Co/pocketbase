@@ -1,3 +1,17 @@
+// Package pocketbase provides a Go SDK for interacting with PocketBase APIs.
+//
+// This package offers type-safe, idiomatic Go interfaces for PocketBase operations
+// including authentication, CRUD operations, real-time subscriptions, and backup management.
+//
+// Example usage:
+//
+//	client := pocketbase.NewClient("http://localhost:8090")
+//	records, err := client.List("posts", pocketbase.ParamsList{})
+//
+// For type-safe operations, use CollectionSet:
+//
+//	collection := pocketbase.CollectionSet[MyStruct](client, "posts")
+//	records, err := collection.List(pocketbase.ParamsList{})
 package pocketbase
 
 import (
@@ -13,9 +27,11 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+// ErrInvalidResponse is returned when PocketBase returns an invalid response.
 var ErrInvalidResponse = errors.New("invalid response")
 
 type (
+	// Client represents a PocketBase API client with authentication and HTTP capabilities.
 	Client struct {
 		client     *resty.Client
 		url        string
@@ -24,14 +40,17 @@ type (
 		sseDebug   bool
 		restDebug  bool
 	}
+	// ClientOption is a function type for configuring Client instances.
 	ClientOption func(*Client)
 )
 
+// EnvIsTruthy checks if an environment variable is set to a truthy value (1, true, yes).
 func EnvIsTruthy(key string) bool {
 	val := strings.ToLower(os.Getenv(key))
 	return val == "1" || val == "true" || val == "yes"
 }
 
+// NewClient creates a new PocketBase API client with the specified URL and options.
 func NewClient(url string, opts ...ClientOption) *Client {
 	client := resty.New()
 	client.
@@ -59,6 +78,7 @@ func NewClient(url string, opts ...ClientOption) *Client {
 	return c
 }
 
+// WithRestDebug enables REST API debug logging for the client.
 func WithRestDebug() ClientOption {
 	return func(c *Client) {
 		c.restDebug = true
@@ -66,12 +86,14 @@ func WithRestDebug() ClientOption {
 	}
 }
 
+// WithSseDebug enables Server-Sent Events debug logging for the client.
 func WithSseDebug() ClientOption {
 	return func(c *Client) {
 		c.sseDebug = true
 	}
 }
 
+// WithAdminEmailPassword22 configures admin authentication using email and password (legacy version).
 func WithAdminEmailPassword22(email, password string) ClientOption {
 	return func(c *Client) {
 		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+"/api/admins/auth-with-password", email, password)
@@ -94,46 +116,54 @@ func WithRetry(count int, waitTime, maxWaitTime time.Duration) ClientOption {
 	}
 }
 
+// WithAdminEmailPassword configures admin authentication using email and password.
 func WithAdminEmailPassword(email, password string) ClientOption {
 	return func(c *Client) {
 		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-with-password", core.CollectionNameSuperusers), email, password)
 	}
 }
 
+// WithUserEmailPassword configures user authentication using email and password.
 func WithUserEmailPassword(email, password string) ClientOption {
 	return func(c *Client) {
 		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+"/api/collections/users/auth-with-password", email, password)
 	}
 }
 
+// WithUserEmailPasswordAndCollection configures user authentication for a specific collection.
 func WithUserEmailPasswordAndCollection(email, password, collection string) ClientOption {
 	return func(c *Client) {
 		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+"/api/collections/"+collection+"/auth-with-password", email, password)
 	}
 }
 
+// WithAdminToken22 configures admin authentication using a token (legacy version).
 func WithAdminToken22(token string) ClientOption {
 	return func(c *Client) {
 		c.authorizer = newAuthorizeToken(c.client, c.url+"/api/admins/auth-refresh", token)
 	}
 }
 
+// WithAdminToken configures admin authentication using a token.
 func WithAdminToken(token string) ClientOption {
 	return func(c *Client) {
 		c.authorizer = newAuthorizeToken(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-refresh", core.CollectionNameSuperusers), token)
 	}
 }
 
+// WithUserToken configures user authentication using a token.
 func WithUserToken(token string) ClientOption {
 	return func(c *Client) {
 		c.authorizer = newAuthorizeToken(c.client, c.url+"/api/collections/users/auth-refresh", token)
 	}
 }
 
+// Authorize performs authentication using the configured authorization method.
 func (c *Client) Authorize() error {
 	return c.authorizer.authorize()
 }
 
+// Update updates a record in the specified collection.
 func (c *Client) Update(collection string, id string, body any) error {
 	if err := c.Authorize(); err != nil {
 		return err
@@ -159,6 +189,7 @@ func (c *Client) Update(collection string, id string, body any) error {
 	return nil
 }
 
+// Get performs a GET request to the specified path with optional request/response hooks.
 func (c *Client) Get(path string, result any, onRequest func(*resty.Request), onResponse func(*resty.Response)) error {
 	if err := c.Authorize(); err != nil {
 		return err
@@ -192,6 +223,7 @@ func (c *Client) Get(path string, result any, onRequest func(*resty.Request), on
 	return nil
 }
 
+// Create creates a new record in the specified collection.
 func (c *Client) Create(collection string, body any) (ResponseCreate, error) {
 	var response ResponseCreate
 
@@ -222,6 +254,7 @@ func (c *Client) Create(collection string, body any) (ResponseCreate, error) {
 	return *resp.Result().(*ResponseCreate), nil
 }
 
+// Delete removes a record from the specified collection.
 func (c *Client) Delete(collection string, id string) error {
 	if err := c.Authorize(); err != nil {
 		return err
@@ -248,6 +281,7 @@ func (c *Client) Delete(collection string, id string) error {
 	return nil
 }
 
+// One retrieves a single record from the specified collection.
 func (c *Client) One(collection string, id string) (map[string]any, error) {
 	var response map[string]any
 
@@ -280,6 +314,7 @@ func (c *Client) One(collection string, id string) (map[string]any, error) {
 	return response, nil
 }
 
+// OneTo retrieves a single record and unmarshals it into the provided result.
 func (c *Client) OneTo(collection string, id string, result any) error {
 	if err := c.Authorize(); err != nil {
 		return err
@@ -310,6 +345,7 @@ func (c *Client) OneTo(collection string, id string, result any) error {
 	return nil
 }
 
+// List retrieves a paginated list of records from the specified collection.
 func (c *Client) List(collection string, params ParamsList) (ResponseList[map[string]any], error) {
 	var response ResponseList[map[string]any]
 
@@ -363,6 +399,7 @@ func (c *Client) List(collection string, params ParamsList) (ResponseList[map[st
 	return response, nil
 }
 
+// FullList retrieves all records from the specified collection without pagination.
 func (c *Client) FullList(collection string, params ParamsList) (ResponseList[map[string]any], error) {
 	var response ResponseList[map[string]any]
 	params.Page = 1
@@ -394,16 +431,19 @@ func (c *Client) FullList(collection string, params ParamsList) (ResponseList[ma
 	return response, nil
 }
 
+// AuthStore returns the client's authentication store.
 func (c *Client) AuthStore() authStore {
 	return c.authorizer
 }
 
+// Backup returns a Backup instance for managing backup operations.
 func (c *Client) Backup() Backup {
 	return Backup{
 		Client: c,
 	}
 }
 
+// Files returns a Files instance for managing file operations.
 func (c *Client) Files() Files {
 	return Files{
 		Client: c,

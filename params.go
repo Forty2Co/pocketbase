@@ -1,5 +1,6 @@
 package pocketbase
 
+// ParamsList represents query parameters for PocketBase API requests including pagination, filtering, and sorting.
 type ParamsList struct {
 	Page    int
 	Size    int

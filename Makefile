@@ -5,7 +5,7 @@ export GOPROXY=https://proxy.golang.org
 .DEFAULT_GOAL: all
 
 # Build metadata
-VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || cat VERSION 2>/dev/null || echo "dev")
 COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GO_VERSION ?= $(shell go version | cut -d' ' -f3)
@@ -31,7 +31,7 @@ SERVER_PID_FILE ?= $(BUILD_DIR)/server.pid
 SERVER_PORT ?= 8090
 SERVER_HOST ?= 127.0.0.1
 
-.PHONY: all build check clean format help serve serve-bg serve-stop serve-status serve-restart test test-unit test-integration tidy deps-update deps-check deps-audit deps-outdated
+.PHONY: all build check clean format help serve serve-bg serve-stop serve-status serve-restart test test-unit test-integration tidy deps-update deps-check deps-audit deps-outdated version tag-release
 
 all: check test-unit build ## Default target: check, test-unit, build
 
@@ -147,6 +147,22 @@ deps-audit: ## Audit dependencies for security vulnerabilities
 deps-outdated: ## Check for outdated dependencies
 	@echo "Checking for outdated dependencies..."
 	@go list -u -m all | grep -v "indirect" | grep "\["
+
+version: ## Show current version
+	@echo "Version: $(VERSION)"
+	@echo "Commit: $(COMMIT)"
+	@echo "Build Time: $(BUILD_TIME)"
+	@echo "Go Version: $(GO_VERSION)"
+
+tag-release: ## Create and push a git tag for the current VERSION
+	@if [ ! -f VERSION ]; then \
+		echo "VERSION file not found"; \
+		exit 1; \
+	fi
+	@VERSION_FILE=$$(cat VERSION) && \
+	echo "Creating tag v$$VERSION_FILE..." && \
+	git tag -a "v$$VERSION_FILE" -m "Release v$$VERSION_FILE" && \
+	echo "Tag created. Push with: git push origin v$$VERSION_FILE"
 
 help: ## Show help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

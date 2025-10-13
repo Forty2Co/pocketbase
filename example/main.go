@@ -1,3 +1,9 @@
+// Package main provides usage examples for the PocketBase Go SDK.
+//
+// This example demonstrates basic CRUD operations including listing, creating,
+// and deleting records using both struct types and map[string]any.
+//
+// Run with: make serve (in another terminal) && go run example/main.go
 package main
 
 import (

@@ -7,6 +7,7 @@ import (
 )
 
 type (
+	// AuthMethod represents the available authentication methods for a collection.
 	AuthMethod struct {
 		AuthProviders    []AuthProvider `json:"authProviders"`
 		UsernamePassword bool           `json:"usernamePassword"`
@@ -14,6 +15,7 @@ type (
 		OnlyVerified     bool           `json:"onlyVerified"`
 	}
 
+	// AuthProvider represents an OAuth2 authentication provider configuration.
 	AuthProvider struct {
 		Name                string `json:"name"`
 		DisplayName         string `json:"displayName"`
@@ -25,7 +27,7 @@ type (
 	}
 )
 
-// ListAuthMethods returns all available collection auth methods.
+// ListAuthMethods22 returns all available collection auth methods (legacy version).
 func (c *Collection[T]) ListAuthMethods22() (AuthMethod, error) {
 	var response AuthMethod
 	if err := c.Authorize(); err != nil {
@@ -92,6 +94,7 @@ type providerInfo struct {
 	CodeChallengeMethod string `json:"codeChallengeMethod"`
 }
 
+// AuthMethodsResponse represents the response structure for authentication methods.
 // Borrowed from https://github.com/pocketbase/pocketbase/blob/844f18cac379fc749493dc4dd73638caa89167a1/apis/record_auth_methods.go#L52
 type AuthMethodsResponse struct {
 	Password passwordResponse `json:"password"`
@@ -136,11 +139,13 @@ func (c *Collection[T]) ListAuthMethods() (AuthMethodsResponse, error) {
 }
 
 type (
+	// AuthWithPasswordResponse represents the response from password authentication.
 	AuthWithPasswordResponse struct {
 		Record Record `json:"record"`
 		Token  string `json:"token"`
 	}
 
+	// Record represents a PocketBase record with common fields.
 	Record struct {
 		Avatar          string `json:"avatar"`
 		CollectionID    string `json:"collectionId"`
@@ -196,6 +201,7 @@ func (c *Collection[T]) AuthWithPassword(username string, password string) (Auth
 	return response, nil
 }
 
+// AuthWithOauth2Response represents the response from OAuth2 authentication.
 type AuthWithOauth2Response struct {
 	Token string `json:"token"`
 }
@@ -246,6 +252,7 @@ func (c *Collection[T]) AuthWithOAuth2Code(provider string, code string, codeVer
 	return response, nil
 }
 
+// AuthRefreshResponse represents the response from authentication token refresh.
 type AuthRefreshResponse struct {
 	Record struct {
 		Avatar          string `json:"avatar"`
@@ -462,6 +469,7 @@ func (c *Collection[T]) ConfirmEmailChange(emailChangeToken string, password str
 	return nil
 }
 
+// ExternalAuthRequest represents an external authentication provider link.
 type ExternalAuthRequest struct {
 	ID           string `json:"id"`
 	Created      string `json:"created"`
@@ -472,7 +480,7 @@ type ExternalAuthRequest struct {
 	ProviderID   string `json:"providerId"`
 }
 
-// ListExternalAuths lists all linked external auth providers for the specified auth record.
+// ListExternalAuths22 lists all linked external auth providers for the specified auth record.
 func (c *Collection[T]) ListExternalAuths22(recordID string) ([]ExternalAuthRequest, error) {
 	var response []ExternalAuthRequest
 	if err := c.Authorize(); err != nil {
@@ -501,7 +509,7 @@ func (c *Collection[T]) ListExternalAuths22(recordID string) ([]ExternalAuthRequ
 	return response, nil
 }
 
-// UnlinkExternalAuth unlink a single external auth provider from the specified auth record.
+// UnlinkExternalAuth22 unlinks a single external auth provider from the specified auth record.
 func (c *Collection[T]) UnlinkExternalAuth22(recordID string, provider string) error {
 	if err := c.Authorize(); err != nil {
 		return err
@@ -523,10 +531,6 @@ func (c *Collection[T]) UnlinkExternalAuth22(recordID string, provider string) e
 		)
 	}
 	return nil
-}
-
-func (c *Collection[T]) baseCollectionPath() string {
-	return c.BaseCollectionPath
 }
 
 func (c *Collection[T]) baseCrudPath() string {
