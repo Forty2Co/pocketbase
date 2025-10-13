@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pluja/pocketbase/migrations"
+	"github.com/Forty2Co/pocketbase/migrations"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -140,7 +140,7 @@ func TestCollection_RealtimeReconnect(t *testing.T) {
 	defer stream.Unsubscribe()
 	<-stream.Ready()
 
-	var got = false
+	got := false
 	time.AfterFunc(13*time.Second, func() {
 		if _, err := collection.Create(defaultBody); err != nil {
 			t.Error(err)
