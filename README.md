@@ -3,11 +3,15 @@
 
 ### Project
 
-This repository contains community-maintained Go SDK for Pocketbase API. Not all endpoints are covered yet, if you need some particular endpoint or feature, please feel free to open a Pull Request.
-It's well-tested and used in production in:
+I forked this to run some of my personal projects. I'm open for any contribution.
 
-- [Coinpaprika](https://coinpaprika.com)
-- [KYCNOT.me](https://kycnot.me)
+#### Roadmap
+
+> Note
+> This will be updated as we go.****
+
+[] Add observability support.
+[] Improve pocketbase version compatibility
 
 ### Compatibility
 
@@ -298,21 +302,63 @@ More examples can be found in:
 - [tests for the client](./client_test.go)
 - [tests for the collection](./collection_test.go)
 - remember to start the Pocketbase before running examples with `make serve` command
+- for integration tests, you can use `make test-integration` which automatically manages the server
 
 ## Development
 
 ### Makefile targets
 
-- `make serve` - builds all binaries and runs local PocketBase server, it will create collections and sample data based on [migration files](./migrations)
-- `make test` - runs tests (make sure that PocketBase server is running - `make serve` before)
-- `make check` - runs linters and security checks (run this before commit)
+**Server Management:**
+
+- `make serve` - builds all binaries and runs local PocketBase server in foreground
+- `make serve-bg` - starts PocketBase server in background (saves PID for management)
+- `make serve-stop` - stops the background PocketBase server
+- `make serve-status` - checks if the server is running
+- `make serve-restart` - restarts the background server
+
+**Testing:**
+
+- `make test-integration` - runs all tests with automatic server management (recommended)
+- `make test-unit` - runs only unit tests (fast, no server required)
+- `make test` - runs tests (requires PocketBase server running manually)
+
+**Development:**
+
 - `make build` - builds all binaries (examples and PocketBase server)
+- `make check` - runs linters and security checks (run this before commit)
+- `make clean` - removes build artifacts and stops any running servers
 - `make help` - shows help and other targets
 
 ## Contributing
 
-- Go 1.21+ (for making changes in the Go code)
+- Go 1.24+ (for making changes in the Go code)
 - While developing use `WithDebug()` client option to see HTTP requests and responses
 - Make sure that all checks are green (run `make check` before commit)
-- Make sure that all tests pass (run `make test` before commit)
+- Make sure that all tests pass (run `make test-integration` before commit)
 - Create a PR with your changes and wait for review
+
+### Running Tests
+
+**Recommended approach:**
+
+```bash
+make test-integration  # Automatically starts server, runs tests, stops server
+```
+
+**Manual approach:**
+
+```bash
+# Terminal 1: Start server
+make serve
+
+# Terminal 2: Run tests
+make test
+
+# Terminal 1: Stop server (Ctrl+C)
+```
+
+**Unit tests only:**
+
+```bash
+make test-unit  # Fast tests that don't require a server
+```

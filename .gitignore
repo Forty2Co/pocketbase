@@ -24,3 +24,7 @@ bin/
 
 # SQLite databases
 resources/*.3db
+
+# AI Ediors
+.kiro/
+.opencode/
