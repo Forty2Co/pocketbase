@@ -13,12 +13,14 @@ import (
 	"github.com/donovanhide/eventsource"
 )
 
+// Event represents a real-time event from PocketBase with action, record data, and optional error.
 type Event[T any] struct {
 	Action string `json:"action"`
 	Record T      `json:"record"`
 	Error  error  `json:"-"`
 }
 
+// Subscribe creates a real-time subscription to the collection with default options.
 func (c *Collection[T]) Subscribe(targets ...string) (*Stream[T], error) {
 	opts := SubscribeOptions{
 		ReconnectStrategy: &backoff.ZeroBackOff{},
@@ -26,10 +28,12 @@ func (c *Collection[T]) Subscribe(targets ...string) (*Stream[T], error) {
 	return c.SubscribeWith(opts, targets...)
 }
 
+// SubscribeOptions configures real-time subscription behavior including reconnection strategy.
 type SubscribeOptions struct {
 	ReconnectStrategy backoff.BackOff
 }
 
+// SubscribeWith creates a real-time subscription with custom options and target collections.
 func (c *Collection[T]) SubscribeWith(opts SubscribeOptions, targets ...string) (*Stream[T], error) {
 	if err := c.Authorize(); err != nil {
 		return nil, err
@@ -58,10 +62,16 @@ func (c *Collection[T]) SubscribeWith(opts SubscribeOptions, targets ...string) 
 		return func() (err error) {
 			req := c.client.R().SetContext(ctx).SetDoNotParseResponse(true)
 			resp, err := req.Get(c.url + "/api/realtime")
-			defer resp.RawBody().Close()
 			if err != nil {
 				return
 			}
+			defer func() {
+				if closeErr := resp.RawBody().Close(); closeErr != nil {
+					if c.sseDebug {
+						log.Printf("Failed to close response body: %v", closeErr)
+					}
+				}
+			}()
 
 			d := eventsource.NewDecoder(resp.RawBody())
 
@@ -107,6 +117,7 @@ func (c *Collection[T]) SubscribeWith(opts SubscribeOptions, targets ...string) 
 	return stream, nil
 }
 
+// SubscriptionsSet represents the subscription configuration sent to PocketBase.
 type SubscriptionsSet struct {
 	ClientID      string   `json:"clientId"`
 	Subscriptions []string `json:"subscriptions"`
@@ -128,6 +139,7 @@ func (c *Collection[T]) authSubscribeStream(data []byte, targets []string) (err 
 	return
 }
 
+// Stream represents a real-time event stream with subscription management capabilities.
 type Stream[T any] struct {
 	channel     *multicast.Channel[Event[T]]
 	unsubscribe func()
@@ -144,10 +156,12 @@ func newStream[T any]() *Stream[T] {
 	}
 }
 
+// Events returns a channel that receives real-time events from the stream.
 func (s *Stream[T]) Events() <-chan Event[T] {
 	return s.channel.Listen().C
 }
 
+// Unsubscribe closes the stream and cleans up resources.
 func (s *Stream[T]) Unsubscribe() {
 	s.onceCleanup.Do(func() {
 		s.unsubscribe()
@@ -155,13 +169,15 @@ func (s *Stream[T]) Unsubscribe() {
 	})
 }
 
-// Deprecated: use <-stream.Ready() instead of
+// WaitAuthReady waits for the stream to be ready for authentication.
+// Deprecated: use <-stream.Ready() instead.
 func (s *Stream[T]) WaitAuthReady() error {
 	s.ready.RLock()
 	defer s.ready.RUnlock()
 	return nil
 }
 
+// Ready returns a channel that closes when the stream is ready to receive events.
 func (s *Stream[T]) Ready() <-chan struct{} {
 	readyCh := make(chan struct{})
 	go func() {

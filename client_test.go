@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/pluja/pocketbase/migrations"
+	"github.com/Forty2Co/pocketbase/migrations"
 )
 
 const (
@@ -17,6 +17,9 @@ const (
 // REMEMBER to start the Pocketbase before running this example with `make serve` command
 
 func TestAuthorizeAnonymous(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name    string
 		wantErr bool
@@ -36,6 +39,9 @@ func TestAuthorizeAnonymous(t *testing.T) {
 }
 
 func TestListAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type auth struct {
 		email    string
 		password string
@@ -98,6 +104,9 @@ func TestListAccess(t *testing.T) {
 }
 
 func TestAuthorizeEmailPassword(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	type args struct {
 		email    string
 		password string
@@ -144,6 +153,9 @@ func TestAuthorizeEmailPassword(t *testing.T) {
 }
 
 func TestAuthorizeToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	tests := []struct {
 		name       string
 		validToken bool
@@ -211,6 +223,9 @@ func TestAuthorizeToken(t *testing.T) {
 }
 
 func TestClient_List(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	defaultClient := NewClient(defaultURL)
 
 	tests := []struct {
@@ -266,6 +281,9 @@ func TestClient_List(t *testing.T) {
 }
 
 func TestClient_Delete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 
@@ -296,6 +314,9 @@ func TestClient_Delete(t *testing.T) {
 }
 
 func TestClient_Update(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 
@@ -332,6 +353,9 @@ func TestClient_Update(t *testing.T) {
 }
 
 func TestClient_Create(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	defaultClient := NewClient(defaultURL)
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
@@ -393,6 +417,9 @@ func TestClient_Create(t *testing.T) {
 }
 
 func TestClient_One(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 
@@ -419,6 +446,9 @@ func TestClient_One(t *testing.T) {
 }
 
 func TestClient_OneTo(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	client := NewClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 

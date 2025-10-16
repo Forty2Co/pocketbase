@@ -9,10 +9,12 @@ import (
 )
 
 type (
+	// Backup provides methods for managing PocketBase backup operations.
 	Backup struct {
 		*Client
 	}
 
+	// ResponseBackupFullList represents a backup file in the backup list response.
 	ResponseBackupFullList struct {
 		Key      string `json:"key"`
 		Size     int    `json:"size"`
@@ -50,6 +52,7 @@ func (b Backup) FullList() ([]ResponseBackupFullList, error) {
 	return response, nil
 }
 
+// CreateRequest represents the request structure for creating a backup.
 type CreateRequest struct {
 	Name string `json:"name"`
 }
@@ -173,7 +176,7 @@ func (b Backup) Restore(key string) error {
 	return nil
 }
 
-// GetDownloadToken builds a download url for a single existing backup using an
+// GetDownloadURL builds a download url for a single existing backup using an
 // admin file token and the backup file key.
 //
 // The file token can be generated via `client.Files().GetToken()`.

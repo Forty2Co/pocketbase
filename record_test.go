@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pluja/pocketbase/migrations"
+	"github.com/Forty2Co/pocketbase/migrations"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,6 +18,9 @@ type User struct {
 }
 
 func TestCollection_ListAuthMethods(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("get AuthMethods with invalid authorization", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL, WithAdminEmailPassword("foo", "bar"))
 
@@ -43,6 +46,9 @@ func TestCollection_ListAuthMethods(t *testing.T) {
 }
 
 func TestCollection_AuthWithPassword(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("authenticate with valid user credentials", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 
@@ -70,6 +76,9 @@ func TestCollection_AuthWithOauth2(_ *testing.T) {
 }
 
 func TestCollection_AuthRefresh(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("refresh authentication without valid user auth token", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 
@@ -107,6 +116,9 @@ func TestCollection_AuthRefresh(t *testing.T) {
 }
 
 func TestCollection_RequestVerification(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("request verification with valid authorization and not existing user", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 
@@ -123,6 +135,9 @@ func TestCollection_RequestVerification(t *testing.T) {
 }
 
 func TestCollection_ConfirmVerification(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("confirm verification with an invalid verification token", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 
@@ -141,6 +156,9 @@ func TestCollection_ConfirmVerification(t *testing.T) {
 }
 
 func TestCollection_RequestPasswordReset(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("request password reset with valid authorization and not existing user", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 
@@ -157,6 +175,9 @@ func TestCollection_RequestPasswordReset(t *testing.T) {
 }
 
 func TestCollection_ConfirmPassworReset(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("confirm password reset with an invalid verification token", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 
@@ -177,6 +198,9 @@ func TestCollection_ConfirmPassworReset(t *testing.T) {
 }
 
 func TestCollection_RequestEmailChange(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("confirm pemail change without a valid login", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 
@@ -187,6 +211,9 @@ func TestCollection_RequestEmailChange(t *testing.T) {
 }
 
 func TestCollection_ConfirmEmailChange(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 	t.Run("confirm email change with an invalid verification token", func(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 

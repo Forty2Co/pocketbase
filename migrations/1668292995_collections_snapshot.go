@@ -1,3 +1,7 @@
+// Package migrations provides database migration scripts for PocketBase collections.
+//
+// This package contains auto-generated and custom migrations that define
+// the database schema and initial data for the PocketBase application.
 package migrations
 
 import (

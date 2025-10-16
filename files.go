@@ -6,10 +6,12 @@ import (
 )
 
 type (
+	// Files provides methods for managing PocketBase file operations.
 	Files struct {
 		*Client
 	}
 
+	// ResponseGetToken represents the response from requesting a file access token.
 	ResponseGetToken struct {
 		Token string `json:"token"`
 	}

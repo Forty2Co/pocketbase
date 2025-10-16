@@ -1,3 +1,9 @@
+// Package main provides usage examples for the PocketBase Go SDK.
+//
+// This example demonstrates basic CRUD operations including listing, creating,
+// and deleting records using both struct types and map[string]any.
+//
+// Run with: make serve (in another terminal) && go run example/main.go
 package main
 
 import (
@@ -5,8 +11,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/Forty2Co/pocketbase"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pluja/pocketbase"
 )
 
 type Post struct {
