@@ -27,13 +27,13 @@ jobs:
           tar -czf pocketbase-sdk-linux-amd64.tar.gz pocketbase example
           zip pocketbase-sdk-linux-amd64.zip pocketbase example
 
-      - name: Create Release
-        uses: actions/create-release@v1
+      - name: Create or Update Release
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
             ## Changes
 
@@ -42,17 +42,10 @@ jobs:
             ## Installation
 
             ```bash
-            go get github.com/Forty2Co/pocketbase@${{ github.ref }}
+            go get github.com/Forty2Co/pocketbase@${{ github.ref_name }}
             ```
           draft: false
           prerelease: false
-
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/pocketbase-sdk-linux-amd64.tar.gz
-          asset_name: pocketbase-sdk-linux-amd64.tar.gz
-          asset_content_type: application/gzip
+          files: |
+            ./bin/pocketbase-sdk-linux-amd64.tar.gz
+            ./bin/pocketbase-sdk-linux-amd64.zip
