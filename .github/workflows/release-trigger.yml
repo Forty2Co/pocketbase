@@ -1,0 +1,103 @@
+name: Release Trigger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  check-version-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Fetch current and previous commit for comparison
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Check if VERSION file changed
+        id: version-check
+        run: |
+          # Compare VERSION file between current commit and previous commit
+          if git diff HEAD~1 HEAD --name-only | grep -q "^VERSION$"; then
+            echo "VERSION file changed in this push"
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION file not changed in this push - skipping release"
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Read and validate version
+        if: steps.version-check.outputs.version_changed == 'true'
+        id: read-version
+        run: |
+          # Read version from VERSION file
+          VERSION=$(cat VERSION | tr -d '\n\r')
+          echo "Current version: $VERSION"
+
+          # Validate version format using Python script
+          python .github/scripts/version_utils.py validate "$VERSION"
+
+          # Store version for later steps
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists
+        if: steps.version-check.outputs.version_changed == 'true'
+        id: tag-check
+        run: |
+          TAG_NAME="v${{ steps.read-version.outputs.version }}"
+
+          # Check if tag already exists locally or remotely
+          if git tag -l "$TAG_NAME" | grep -q "$TAG_NAME"; then
+            echo "Error: Tag $TAG_NAME already exists locally"
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Check if tag exists on remote
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG_NAME$"; then
+            echo "Error: Tag $TAG_NAME already exists on remote"
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "Tag $TAG_NAME does not exist - proceeding with creation"
+          echo "tag_exists=false" >> $GITHUB_OUTPUT
+
+      - name: Create and push git tag
+        if: steps.version-check.outputs.version_changed == 'true' && steps.tag-check.outputs.tag_exists == 'false'
+        run: |
+          TAG_NAME="v${{ steps.read-version.outputs.version }}"
+
+          # Configure git for tagging
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create the tag
+          echo "Creating tag: $TAG_NAME"
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+
+          # Push the tag to trigger release workflow
+          echo "Pushing tag: $TAG_NAME"
+          git push origin "$TAG_NAME"
+
+          echo "Successfully created and pushed tag: $TAG_NAME"
+
+      - name: Log release process completion
+        if: steps.version-check.outputs.version_changed == 'true'
+        run: |
+          echo "Release trigger workflow completed successfully"
+          echo "Tag v${{ steps.read-version.outputs.version }} has been created and pushed"
+          echo "This will trigger the release build workflow"
+
+      - name: Log skip message
+        if: steps.version-check.outputs.version_changed == 'false'
+        run: |
+          echo "Release process skipped - VERSION file was not changed in this push"
+          echo "To trigger a release, update the VERSION file in a future commit"

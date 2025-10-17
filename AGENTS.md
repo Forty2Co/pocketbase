@@ -30,6 +30,10 @@ This is a **Go SDK for PocketBase** - a community-maintained client library that
 - **Observer Pattern**: Real-time subscriptions with event channels
 - **Repository Pattern**: Collection-based data access
 
+## Minor Scripting
+
+- For any minor scripting work, example- generating script for github workflow, use python.
+
 ## Development Workflow
 
 ### Quick Start for Agents
