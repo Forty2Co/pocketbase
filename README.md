@@ -367,46 +367,73 @@ make test-unit  # Fast tests that don't require a server
 
 This project uses semantic versioning and automated releases via GitHub Actions.
 
+### Automated Release Workflow
+
+Releases are automatically triggered when pull requests are merged to the main branch with VERSION file changes:
+
+1. **Update VERSION file** in your pull request (e.g., `0.2.1`)
+2. **Merge PR to main** - This automatically:
+   - Detects VERSION file changes
+   - Creates git tag (e.g., `v0.2.1`)
+   - Triggers release build workflow
+   - Creates GitHub release with auto-generated notes
+   - Builds and uploads release artifacts
+
 ### Version Management
 
 - **VERSION file** - Contains the current version (e.g., `0.2.0`)
-- **Git tags** - Used for releases (e.g., `v0.2.0`)
+- **Git tags** - Automatically created (e.g., `v0.2.0`)
+- **Release notes** - Auto-generated from PR titles and commit messages
 - **Automatic builds** - Version info is injected into binaries
 
 ### Creating a Release
 
-1. **Update version and changelog:**
+1. **Update VERSION file in a pull request:**
    ```bash
+   # Create feature branch
+   git checkout -b release/0.2.1
+   
    # Update VERSION file
    echo "0.2.1" > VERSION
    
-   # Update CHANGELOG.md with your changes
-   # Add new section for [0.2.1] with Added/Changed/Fixed
-   ```
-
-2. **Commit changes:**
-   ```bash
-   git add VERSION CHANGELOG.md
+   # Commit and push
+   git add VERSION
    git commit -m "chore: bump version to 0.2.1"
-   git push origin master
+   git push origin release/0.2.1
    ```
 
-3. **Create and push tag:**
-   ```bash
-   make tag-release
-   git push origin v0.2.1
-   ```
+2. **Create and merge pull request:**
+   - Create PR from your branch to main
+   - Include release notes in PR description
+   - Merge PR to main
 
-4. **Automated release:**
-   - GitHub Actions automatically creates a release
-   - Builds binaries and attaches them to the release
-   - Release notes are generated from CHANGELOG.md
+3. **Automatic release process:**
+   - GitHub Actions detects VERSION file change
+   - Creates git tag `v0.2.1`
+   - Builds binaries and creates GitHub release
+   - Release notes are auto-generated from PR and commit history
 
 ### Version Strategy
 
 - **Patch** (0.2.1) - Bug fixes, documentation updates
 - **Minor** (0.3.0) - New features, API additions
 - **Major** (1.0.0) - Breaking changes
+
+### Manual Release (if needed)
+
+For manual releases, you can still use the traditional approach:
+
+```bash
+# Update VERSION file
+echo "0.2.1" > VERSION
+
+# Commit changes
+git add VERSION
+git commit -m "chore: bump version to 0.2.1"
+git push origin main
+
+# The automated workflow will handle the rest
+```
 
 ### Checking Version
 
