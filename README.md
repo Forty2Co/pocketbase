@@ -10,8 +10,8 @@ I forked this to run some of my personal projects. I'm open for any contribution
 > Note
 > This will be updated as we go.****
 
-[] Add observability support.
-[] Improve pocketbase version compatibility
+- [] Add observability support.
+- [] Improve pocketbase version compatibility
 
 ### Compatibility
 
