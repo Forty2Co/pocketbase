@@ -1,4 +1,4 @@
-package pocketbase
+package realtime
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/SierraSoftworks/multicast/v2"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/donovanhide/eventsource"
+	"github.com/go-resty/resty/v2"
 )
 
 // Event represents a real-time event from PocketBase with action, record data, and optional error.
@@ -20,12 +21,31 @@ type Event[T any] struct {
 	Error  error  `json:"-"`
 }
 
+// Authorizer defines the interface for authentication operations.
+type Authorizer interface {
+	Authorize() error
+}
+
+// HTTPClient defines the interface for HTTP client operations.
+type HTTPClient interface {
+	R() *resty.Request
+}
+
+// Collection defines the interface for collection operations needed by realtime subscriptions.
+type Collection[T any] interface {
+	GetName() string
+	GetURL() string
+	GetClient() HTTPClient
+	GetAuthorizer() Authorizer
+	IsSSEDebugEnabled() bool
+}
+
 // Subscribe creates a real-time subscription to the collection with default options.
-func (c *Collection[T]) Subscribe(targets ...string) (*Stream[T], error) {
+func Subscribe[T any](c Collection[T], targets ...string) (*Stream[T], error) {
 	opts := SubscribeOptions{
 		ReconnectStrategy: &backoff.ZeroBackOff{},
 	}
-	return c.SubscribeWith(opts, targets...)
+	return SubscribeWith[T](c, opts, targets...)
 }
 
 // SubscribeOptions configures real-time subscription behavior including reconnection strategy.
@@ -34,13 +54,13 @@ type SubscribeOptions struct {
 }
 
 // SubscribeWith creates a real-time subscription with custom options and target collections.
-func (c *Collection[T]) SubscribeWith(opts SubscribeOptions, targets ...string) (*Stream[T], error) {
-	if err := c.Authorize(); err != nil {
+func SubscribeWith[T any](c Collection[T], opts SubscribeOptions, targets ...string) (*Stream[T], error) {
+	if err := c.GetAuthorizer().Authorize(); err != nil {
 		return nil, err
 	}
 
 	if len(targets) == 0 {
-		targets = []string{c.Name}
+		targets = []string{c.GetName()}
 	}
 
 	stream := newStream[T]()
@@ -49,7 +69,7 @@ func (c *Collection[T]) SubscribeWith(opts SubscribeOptions, targets ...string) 
 
 	handleSSEEvent := func(ev eventsource.Event) {
 		var e Event[T]
-		if c.sseDebug {
+		if c.IsSSEDebugEnabled() {
 			log.Printf("SSE event: %+v", ev)
 		}
 		e.Error = json.Unmarshal([]byte(ev.Data()), &e)
@@ -60,14 +80,14 @@ func (c *Collection[T]) SubscribeWith(opts SubscribeOptions, targets ...string) 
 	stream.ready.Lock()
 	startStream := func(check bool) func() error {
 		return func() (err error) {
-			req := c.client.R().SetContext(ctx).SetDoNotParseResponse(true)
-			resp, err := req.Get(c.url + "/api/realtime")
+			req := c.GetClient().R().SetContext(ctx).SetDoNotParseResponse(true)
+			resp, err := req.Get(c.GetURL() + "/api/realtime")
 			if err != nil {
 				return
 			}
 			defer func() {
 				if closeErr := resp.RawBody().Close(); closeErr != nil {
-					if c.sseDebug {
+					if c.IsSSEDebugEnabled() {
 						log.Printf("Failed to close response body: %v", closeErr)
 					}
 				}
@@ -83,7 +103,7 @@ func (c *Collection[T]) SubscribeWith(opts SubscribeOptions, targets ...string) 
 				return fmt.Errorf("first event must be PB_CONNECT, but got %s", event)
 			}
 
-			if err := c.authSubscribeStream([]byte(ev.Data()), targets); err != nil {
+			if err := authSubscribeStream[T](c, []byte(ev.Data()), targets); err != nil {
 				return err
 			}
 
@@ -123,13 +143,13 @@ type SubscriptionsSet struct {
 	Subscriptions []string `json:"subscriptions"`
 }
 
-func (c *Collection[T]) authSubscribeStream(data []byte, targets []string) (err error) {
+func authSubscribeStream[T any](c Collection[T], data []byte, targets []string) (err error) {
 	var s SubscriptionsSet
 	if err = json.Unmarshal(data, &s); err != nil {
 		return
 	}
 	s.Subscriptions = targets
-	resp, err := c.client.R().SetBody(s).Post(c.url + "/api/realtime")
+	resp, err := c.GetClient().R().SetBody(s).Post(c.GetURL() + "/api/realtime")
 	if err != nil {
 		return
 	}
@@ -186,4 +206,24 @@ func (s *Stream[T]) Ready() <-chan struct{} {
 		close(readyCh)
 	}()
 	return readyCh
+}
+
+// CollectionSubscriber provides subscription methods for collections that implement the Collection interface.
+type CollectionSubscriber[T any] struct {
+	collection Collection[T]
+}
+
+// NewCollectionSubscriber creates a new subscriber for the given collection.
+func NewCollectionSubscriber[T any](c Collection[T]) *CollectionSubscriber[T] {
+	return &CollectionSubscriber[T]{collection: c}
+}
+
+// Subscribe creates a real-time subscription to the collection with default options.
+func (cs *CollectionSubscriber[T]) Subscribe(targets ...string) (*Stream[T], error) {
+	return Subscribe[T](cs.collection, targets...)
+}
+
+// SubscribeWith creates a real-time subscription with custom options and target collections.
+func (cs *CollectionSubscriber[T]) SubscribeWith(opts SubscribeOptions, targets ...string) (*Stream[T], error) {
+	return SubscribeWith[T](cs.collection, opts, targets...)
 }

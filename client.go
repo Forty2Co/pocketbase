@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/Forty2Co/pocketbase/auth"
+	"github.com/Forty2Co/pocketbase/realtime"
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/go-resty/resty/v2"
 	"github.com/pocketbase/pocketbase/core"
@@ -449,3 +450,12 @@ func (c *Client) Files() Files {
 		Client: c,
 	}
 }
+// Re-exports from realtime package for backward compatibility
+type (
+	// Event represents a real-time event from PocketBase.
+	Event[T any] = realtime.Event[T]
+	// Stream represents a real-time event stream.
+	Stream[T any] = realtime.Stream[T]
+	// SubscribeOptions configures real-time subscription behavior.
+	SubscribeOptions = realtime.SubscribeOptions
+)

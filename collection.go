@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+
+	"github.com/Forty2Co/pocketbase/realtime"
 )
 
 // Collection represents a type-safe wrapper around a PocketBase collection.
@@ -120,4 +122,38 @@ func (c *Collection[T]) OneWithParams(id string, params ParamsList) (T, error) {
 		return response, fmt.Errorf("[one] can't unmarshal response, err %w", err)
 	}
 	return response, nil
+}
+// GetName returns the collection name.
+func (c *Collection[T]) GetName() string {
+	return c.Name
+}
+
+// GetURL returns the base URL for the client.
+func (c *Collection[T]) GetURL() string {
+	return c.url
+}
+
+// GetClient returns the HTTP client.
+func (c *Collection[T]) GetClient() realtime.HTTPClient {
+	return c.client
+}
+
+// GetAuthorizer returns the authorizer for authentication.
+func (c *Collection[T]) GetAuthorizer() realtime.Authorizer {
+	return c.authorizer
+}
+
+// IsSSEDebugEnabled returns whether SSE debug is enabled.
+func (c *Collection[T]) IsSSEDebugEnabled() bool {
+	return c.sseDebug
+}
+
+// Subscribe creates a real-time subscription to the collection with default options.
+func (c *Collection[T]) Subscribe(targets ...string) (*realtime.Stream[T], error) {
+	return realtime.Subscribe[T](c, targets...)
+}
+
+// SubscribeWith creates a real-time subscription with custom options and target collections.
+func (c *Collection[T]) SubscribeWith(opts realtime.SubscribeOptions, targets ...string) (*realtime.Stream[T], error) {
+	return realtime.SubscribeWith[T](c, opts, targets...)
 }
