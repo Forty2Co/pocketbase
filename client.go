@@ -16,26 +16,26 @@ package pocketbase
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/Forty2Co/pocketbase/auth"
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/go-resty/resty/v2"
 	"github.com/pocketbase/pocketbase/core"
 )
 
 // ErrInvalidResponse is returned when PocketBase returns an invalid response.
-var ErrInvalidResponse = errors.New("invalid response")
+var ErrInvalidResponse = auth.ErrInvalidResponse
 
 type (
 	// Client represents a PocketBase API client with authentication and HTTP capabilities.
 	Client struct {
 		client     *resty.Client
 		url        string
-		authorizer authStore
+		authorizer auth.Store
 		token      string
 		sseDebug   bool
 		restDebug  bool
@@ -61,7 +61,7 @@ func NewClient(url string, opts ...ClientOption) *Client {
 	c := &Client{
 		client:     client,
 		url:        url,
-		authorizer: authorizeNoOp{},
+		authorizer: auth.NoOpAuth{},
 	}
 	opts = append([]ClientOption{}, opts...)
 	if EnvIsTruthy("REST_DEBUG") {
@@ -96,7 +96,7 @@ func WithSseDebug() ClientOption {
 // WithAdminEmailPassword22 configures admin authentication using email and password (legacy version).
 func WithAdminEmailPassword22(email, password string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+"/api/admins/auth-with-password", email, password)
+		c.authorizer = auth.NewEmailPasswordAuth(c.client, c.url+"/api/admins/auth-with-password", email, password)
 	}
 }
 
@@ -119,48 +119,48 @@ func WithRetry(count int, waitTime, maxWaitTime time.Duration) ClientOption {
 // WithAdminEmailPassword configures admin authentication using email and password.
 func WithAdminEmailPassword(email, password string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-with-password", core.CollectionNameSuperusers), email, password)
+		c.authorizer = auth.NewEmailPasswordAuth(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-with-password", core.CollectionNameSuperusers), email, password)
 	}
 }
 
 // WithUserEmailPassword configures user authentication using email and password.
 func WithUserEmailPassword(email, password string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+"/api/collections/users/auth-with-password", email, password)
+		c.authorizer = auth.NewEmailPasswordAuth(c.client, c.url+"/api/collections/users/auth-with-password", email, password)
 	}
 }
 
 // WithUserEmailPasswordAndCollection configures user authentication for a specific collection.
 func WithUserEmailPasswordAndCollection(email, password, collection string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+"/api/collections/"+collection+"/auth-with-password", email, password)
+		c.authorizer = auth.NewEmailPasswordAuth(c.client, c.url+"/api/collections/"+collection+"/auth-with-password", email, password)
 	}
 }
 
 // WithAdminToken22 configures admin authentication using a token (legacy version).
 func WithAdminToken22(token string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeToken(c.client, c.url+"/api/admins/auth-refresh", token)
+		c.authorizer = auth.NewTokenAuth(c.client, c.url+"/api/admins/auth-refresh", token)
 	}
 }
 
 // WithAdminToken configures admin authentication using a token.
 func WithAdminToken(token string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeToken(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-refresh", core.CollectionNameSuperusers), token)
+		c.authorizer = auth.NewTokenAuth(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-refresh", core.CollectionNameSuperusers), token)
 	}
 }
 
 // WithUserToken configures user authentication using a token.
 func WithUserToken(token string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeToken(c.client, c.url+"/api/collections/users/auth-refresh", token)
+		c.authorizer = auth.NewTokenAuth(c.client, c.url+"/api/collections/users/auth-refresh", token)
 	}
 }
 
 // Authorize performs authentication using the configured authorization method.
 func (c *Client) Authorize() error {
-	return c.authorizer.authorize()
+	return c.authorizer.Authorize()
 }
 
 // Update updates a record in the specified collection.
@@ -432,7 +432,7 @@ func (c *Client) FullList(collection string, params ParamsList) (ResponseList[ma
 }
 
 // AuthStore returns the client's authentication store.
-func (c *Client) AuthStore() authStore {
+func (c *Client) AuthStore() auth.Store {
 	return c.authorizer
 }
 

@@ -1,4 +1,4 @@
-package pocketbase
+package auth
 
 import (
 	"fmt"
@@ -8,7 +8,8 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-type authorizeToken struct {
+// TokenAuth handles token-based authentication
+type TokenAuth struct {
 	client      *resty.Client
 	url         string
 	token       string
@@ -16,9 +17,10 @@ type authorizeToken struct {
 	tokenSingle singleflight.Group
 }
 
-func newAuthorizeToken(c *resty.Client, url string, token string) authStore {
+// NewTokenAuth creates a new token-based authenticator
+func NewTokenAuth(c *resty.Client, url string, token string) Store {
 	c.SetHeader("Authorization", token)
-	return &authorizeToken{
+	return &TokenAuth{
 		client:      c,
 		url:         url,
 		token:       token,
@@ -26,7 +28,7 @@ func newAuthorizeToken(c *resty.Client, url string, token string) authStore {
 	}
 }
 
-func (a *authorizeToken) authorize() error {
+func (a *TokenAuth) Authorize() error {
 	type authResponse struct {
 		Token string `json:"token"`
 	}
@@ -58,10 +60,10 @@ func (a *authorizeToken) authorize() error {
 	return err
 }
 
-func (a *authorizeToken) IsValid() bool {
+func (a *TokenAuth) IsValid() bool {
 	return time.Now().Before(a.tokenValid)
 }
 
-func (a *authorizeToken) Token() string {
+func (a *TokenAuth) Token() string {
 	return a.token
 }
