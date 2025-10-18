@@ -9,7 +9,7 @@ require (
 	github.com/duke-git/lancet/v2 v2.3.7
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/pocketbase/pocketbase v0.30.2
+	github.com/pocketbase/pocketbase v0.30.4
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.17.0
 )
@@ -39,7 +39,7 @@ require (
 	github.com/spf13/cobra v1.10.1 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
-	golang.org/x/exp v0.0.0-20251009144603-d2f985daa21b // indirect
+	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect
 	golang.org/x/image v0.32.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/oauth2 v0.32.0 // indirect

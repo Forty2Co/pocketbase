@@ -110,7 +110,17 @@ test-integration: build ## Run integration tests with automatic server managemen
 	@echo "Waiting for server to be ready..."
 	@sleep 3
 	@echo "Running integration tests..."
-	@go test -shuffle=on -race ./... || TEST_RESULT=$$?; \
+	@go test -shuffle=on -race ./... 2>&1 | tee /tmp/test_output.log || TEST_RESULT=$$?; \
+	echo "========================================"; \
+	echo "❗❗ Test Summary ❗❗"; \
+	echo "📦 Packages tested: $$(grep -c '^ok\|^FAIL' /tmp/test_output.log)"; \
+	echo "⭐ Passed: $$(grep -c '^ok' /tmp/test_output.log)"; \
+	echo "❌ Failed: $$(grep -c '^FAIL' /tmp/test_output.log)"; \
+	if grep -q '^FAIL' /tmp/test_output.log; then \
+		echo "Failed packages:"; \
+		grep '^FAIL' /tmp/test_output.log | sed 's/^FAIL[[:space:]]*//'; \
+	fi; \
+	rm -f /tmp/test_output.log; \
 	echo "Stopping test server..."; \
 	$(MAKE) serve-stop; \
 	exit $${TEST_RESULT:-0}

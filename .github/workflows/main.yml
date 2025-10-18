@@ -118,3 +118,81 @@ jobs:
 
       - name: Build binaries
         run: make build
+
+  summary:
+    name: Workflow Summary
+    runs-on: ubuntu-latest
+    needs: [version_check, check, test, integration_test, build]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🚀 Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Version check (only for PRs)
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            if [ "${{ needs.version_check.result }}" == "success" ]; then
+              echo "| 📋 Version Check | ✅ | Passed |" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ needs.version_check.result }}" == "failure" ]; then
+              echo "| 📋 Version Check | ❌ | Failed |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| 📋 Version Check | ⏭️ | Skipped |" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "| 📋 Version Check | ⏭️ | Skipped (not a PR) |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Quality checks
+          if [ "${{ needs.check.result }}" == "success" ]; then
+            echo "| 🔍 Quality & Security | ✅ | Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.check.result }}" == "failure" ]; then
+            echo "| 🔍 Quality & Security | ⚠️ | Failed (non-blocking) |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🔍 Quality & Security | ⏭️ | Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Unit tests
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            echo "| 🧪 Unit Tests | ✅ | Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.test.result }}" == "failure" ]; then
+            echo "| 🧪 Unit Tests | ❌ | Failed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🧪 Unit Tests | ⏭️ | Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Integration tests
+          if [ "${{ needs.integration_test.result }}" == "success" ]; then
+            echo "| 🔗 Integration Tests | ✅ | Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.integration_test.result }}" == "failure" ]; then
+            echo "| 🔗 Integration Tests | ❌ | Failed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🔗 Integration Tests | ⏭️ | Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Build
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "| 🏗️ Build | ✅ | Passed |" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build.result }}" == "failure" ]; then
+            echo "| 🏗️ Build | ❌ | Failed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 🏗️ Build | ⏭️ | Skipped |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Overall status
+          if [ "${{ needs.test.result }}" == "success" ] && [ "${{ needs.integration_test.result }}" == "success" ] && [ "${{ needs.build.result }}" == "success" ]; then
+            if [ "${{ github.event_name }}" == "pull_request" ] && [ "${{ needs.version_check.result }}" != "success" ]; then
+              echo "## ⚠️ Overall Status: Partial Success" >> $GITHUB_STEP_SUMMARY
+              echo "All tests and build passed, but version check failed." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "## ✅ Overall Status: Success" >> $GITHUB_STEP_SUMMARY
+              echo "All jobs completed successfully!" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "## ❌ Overall Status: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "One or more critical jobs failed." >> $GITHUB_STEP_SUMMARY
+          fi

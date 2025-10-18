@@ -53,3 +53,39 @@ jobs:
             echo "Failed to update release notes with installation instructions"
             exit 1
           }
+
+      - name: Generate Release Summary
+        if: always()
+        run: |
+          echo "# 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if release was successful by checking if files exist
+          if [ -f "./bin/pocketbase-sdk-linux-amd64.tar.gz" ] && [ -f "./bin/pocketbase-sdk-linux-amd64.zip" ]; then
+            echo "## ✅ Build Status: Success" >> $GITHUB_STEP_SUMMARY
+            echo "- Binaries built successfully" >> $GITHUB_STEP_SUMMARY
+            echo "- Release artifacts created" >> $GITHUB_STEP_SUMMARY
+            echo "- GitHub release published" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 📁 Release Assets" >> $GITHUB_STEP_SUMMARY
+            echo "- \`pocketbase-sdk-linux-amd64.tar.gz\`" >> $GITHUB_STEP_SUMMARY
+            echo "- \`pocketbase-sdk-linux-amd64.zip\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 🔗 Links" >> $GITHUB_STEP_SUMMARY
+            echo "- [View Release](../../releases/tag/${{ github.ref_name }})" >> $GITHUB_STEP_SUMMARY
+            echo "- [Download Assets](../../releases/tag/${{ github.ref_name }})" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 📥 Installation" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "go get github.com/Forty2Co/pocketbase@${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Build Status: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- Failed to create release artifacts" >> $GITHUB_STEP_SUMMARY
+            echo "- Check the build logs for errors" >> $GITHUB_STEP_SUMMARY
+          fi
