@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write  # Needed to create tags and releases
+  actions: write   # Needed to trigger other workflows
+
 jobs:
   check-version-and-release:
     runs-on: ubuntu-latest
@@ -86,6 +90,9 @@ jobs:
           # Push the tag to trigger release workflow
           echo "Pushing tag: $TAG_NAME"
           git push origin "$TAG_NAME"
+          
+          # Wait a moment for the tag to be available
+          sleep 2
 
           echo "Successfully created and pushed tag: $TAG_NAME"
 
