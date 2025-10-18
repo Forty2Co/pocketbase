@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Forty2Co/pocketbase/admin"
 	"github.com/Forty2Co/pocketbase/auth"
 	"github.com/Forty2Co/pocketbase/realtime"
 	"github.com/duke-git/lancet/v2/convertor"
@@ -438,16 +439,16 @@ func (c *Client) AuthStore() auth.Store {
 }
 
 // Backup returns a Backup instance for managing backup operations.
-func (c *Client) Backup() Backup {
-	return Backup{
-		Client: c,
+func (c *Client) Backup() admin.Backup {
+	return admin.Backup{
+		Client: admin.NewClient(c.client, c.url, c.authorizer),
 	}
 }
 
 // Files returns a Files instance for managing file operations.
-func (c *Client) Files() Files {
-	return Files{
-		Client: c,
+func (c *Client) Files() admin.Files {
+	return admin.Files{
+		Client: admin.NewClient(c.client, c.url, c.authorizer),
 	}
 }
 // Re-exports from realtime package for backward compatibility
