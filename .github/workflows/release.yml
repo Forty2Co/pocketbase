@@ -38,7 +38,7 @@ jobs:
             --notes-start-tag $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "") \
             ./bin/pocketbase-sdk-linux-amd64.tar.gz \
             ./bin/pocketbase-sdk-linux-amd64.zip
-          
+
           # Add installation instructions to the release notes
           CURRENT_BODY=$(gh release view ${{ github.ref_name }} --json body --jq .body)
           INSTALLATION_NOTES="
@@ -48,7 +48,7 @@ jobs:
           \`\`\`bash
           go get github.com/Forty2Co/pocketbase@${{ github.ref_name }}
           \`\`\`"
-          
+
           gh release edit ${{ github.ref_name }} --notes "$CURRENT_BODY$INSTALLATION_NOTES" || {
             echo "Failed to update release notes with installation instructions"
             exit 1

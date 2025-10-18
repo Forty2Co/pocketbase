@@ -331,8 +331,22 @@ More examples can be found in:
 
 ## Contributing
 
+> **⚠️ IMPORTANT: VERSION File Requirement**
+> 
+> **All pull requests MUST update the VERSION file or they will be automatically rejected.**
+> 
+> This project enforces semantic versioning - every change must be properly versioned:
+> - **Bug fixes**: Increment patch version (`0.2.1` → `0.2.2`)
+> - **New features**: Increment minor version (`0.2.1` → `0.3.0`)
+> - **Breaking changes**: Increment major version (`0.2.1` → `1.0.0`)
+> 
+> PRs without VERSION updates will fail CI checks and cannot be merged.
+
+### Development Requirements
+
 - Go 1.24+ (for making changes in the Go code)
 - While developing use `WithDebug()` client option to see HTTP requests and responses
+- **Update VERSION file** in every PR (see warning above)
 - Make sure that all checks are green (run `make check` before commit)
 - Make sure that all tests pass (run `make test-integration` before commit)
 - Create a PR with your changes and wait for review
@@ -387,6 +401,8 @@ Releases are automatically triggered when pull requests are merged to the main b
 - **Automatic builds** - Version info is injected into binaries
 
 ### Creating a Release
+
+> **📋 Note:** VERSION file updates are **mandatory** for all PRs. The CI system will automatically reject any pull request that doesn't include a VERSION change.
 
 1. **Update VERSION file in a pull request:**
    ```bash
