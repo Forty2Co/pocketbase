@@ -10,8 +10,27 @@ permissions:
   actions: write # Needed to trigger other workflows
 
 jobs:
-  check-version-and-release:
+  wait-for-ci:
+    name: Wait for CI/CD Pipeline
     runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI/CD workflow to complete
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: "Workflow Summary" # This is the final job in main.yml
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30 # Check every 30 seconds
+
+      - name: Log CI/CD completion
+        run: |
+          echo "✅ CI/CD pipeline completed successfully"
+          echo "Proceeding with release process..."
+
+  check-version-and-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [wait-for-ci] # Wait for CI/CD to complete
 
     steps:
       - name: Checkout code
@@ -118,7 +137,7 @@ jobs:
 
           # Get the previous tag (if it exists)
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
+
           # Create release with auto-generated notes
           if [ -n "$PREVIOUS_TAG" ]; then
             echo "Creating release with notes from previous tag: $PREVIOUS_TAG"
@@ -169,6 +188,10 @@ jobs:
         if: always()
         run: |
           echo "# 🚀 Release Trigger Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔄 CI/CD Pipeline Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **CI/CD Workflow**: ✅ Completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Quality Gates**: All checks passed before release" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.version-check.outputs.version_changed }}" == "true" ]; then
