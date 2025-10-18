@@ -74,7 +74,14 @@ jobs:
           echo "Tag $TAG_NAME does not exist - proceeding with creation"
           echo "tag_exists=false" >> $GITHUB_OUTPUT
 
-      - name: Create and push git tag
+      - name: Set up Go
+        if: steps.version-check.outputs.version_changed == 'true' && steps.tag-check.outputs.tag_exists == 'false'
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Create tag and build release
         if: steps.version-check.outputs.version_changed == 'true' && steps.tag-check.outputs.tag_exists == 'false'
         run: |
           TAG_NAME="v${{ steps.read-version.outputs.version }}"
@@ -87,14 +94,50 @@ jobs:
           echo "Creating tag: $TAG_NAME"
           git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
 
-          # Push the tag to trigger release workflow
+          # Push the tag
           echo "Pushing tag: $TAG_NAME"
           git push origin "$TAG_NAME"
 
-          # Wait a moment for the tag to be available
-          sleep 2
-
           echo "Successfully created and pushed tag: $TAG_NAME"
+
+      - name: Build release binaries
+        if: steps.version-check.outputs.version_changed == 'true' && steps.tag-check.outputs.tag_exists == 'false'
+        run: |
+          make build
+          # Create release archives (pocketbase binary only)
+          cd bin
+          tar -czf pocketbase-sdk-linux-amd64.tar.gz pocketbase
+          zip pocketbase-sdk-linux-amd64.zip pocketbase
+
+      - name: Create GitHub Release
+        if: steps.version-check.outputs.version_changed == 'true' && steps.tag-check.outputs.tag_exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="v${{ steps.read-version.outputs.version }}"
+
+          # Create release with auto-generated notes
+          gh release create "$TAG_NAME" \
+            --title "Release $TAG_NAME" \
+            --generate-notes \
+            --notes-start-tag $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "") \
+            ./bin/pocketbase-sdk-linux-amd64.tar.gz \
+            ./bin/pocketbase-sdk-linux-amd64.zip
+
+          # Add installation instructions to the release notes
+          CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq .body)
+          INSTALLATION_NOTES="
+
+          ## Installation
+
+          \`\`\`bash
+          go get github.com/Forty2Co/pocketbase@$TAG_NAME
+          \`\`\`"
+
+          gh release edit "$TAG_NAME" --notes "$CURRENT_BODY$INSTALLATION_NOTES" || {
+            echo "Failed to update release notes with installation instructions"
+            exit 1
+          }
 
       - name: Log release process completion
         if: steps.version-check.outputs.version_changed == 'true'
@@ -124,8 +167,13 @@ jobs:
             if [ "${{ steps.tag-check.outputs.tag_exists }}" == "false" ]; then
               echo "## ✅ Release Status: Success" >> $GITHUB_STEP_SUMMARY
               echo "- Tag **${{ steps.read-version.outputs.tag_name }}** created and pushed successfully" >> $GITHUB_STEP_SUMMARY
-              echo "- Release workflow will be triggered automatically" >> $GITHUB_STEP_SUMMARY
-              echo "- Check the [Releases](../../releases) page for the new release" >> $GITHUB_STEP_SUMMARY
+              echo "- Binaries built and packaged" >> $GITHUB_STEP_SUMMARY
+              echo "- GitHub release created with assets" >> $GITHUB_STEP_SUMMARY
+              echo "- Release available at [Releases](../../releases/tag/${{ steps.read-version.outputs.tag_name }})" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### 📁 Release Assets" >> $GITHUB_STEP_SUMMARY
+              echo "- \`pocketbase-sdk-linux-amd64.tar.gz\`" >> $GITHUB_STEP_SUMMARY
+              echo "- \`pocketbase-sdk-linux-amd64.zip\`" >> $GITHUB_STEP_SUMMARY
             else
               echo "## ❌ Release Status: Failed" >> $GITHUB_STEP_SUMMARY
               echo "- Tag **${{ steps.read-version.outputs.tag_name }}** already exists" >> $GITHUB_STEP_SUMMARY
@@ -140,8 +188,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📚 Next Steps" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.version-check.outputs.version_changed }}" == "true" ] && [ "${{ steps.tag-check.outputs.tag_exists }}" == "false" ]; then
-            echo "- Monitor the [Actions](../../actions) tab for the release build" >> $GITHUB_STEP_SUMMARY
-            echo "- The release will appear in [Releases](../../releases) when complete" >> $GITHUB_STEP_SUMMARY
+            echo "- Download assets from [Releases](../../releases/tag/${{ steps.read-version.outputs.tag_name }})" >> $GITHUB_STEP_SUMMARY
+            echo "- Install via: \`go get github.com/Forty2Co/pocketbase@${{ steps.read-version.outputs.tag_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Share the release with your team!" >> $GITHUB_STEP_SUMMARY
           else
             echo "- Update VERSION file to trigger a new release" >> $GITHUB_STEP_SUMMARY
             echo "- Follow semantic versioning (major.minor.patch)" >> $GITHUB_STEP_SUMMARY
