@@ -116,13 +116,26 @@ jobs:
         run: |
           TAG_NAME="v${{ steps.read-version.outputs.version }}"
 
+          # Get the previous tag (if it exists)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
           # Create release with auto-generated notes
-          gh release create "$TAG_NAME" \
-            --title "Release $TAG_NAME" \
-            --generate-notes \
-            --notes-start-tag $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "") \
-            ./bin/pocketbase-sdk-linux-amd64.tar.gz \
-            ./bin/pocketbase-sdk-linux-amd64.zip
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Creating release with notes from previous tag: $PREVIOUS_TAG"
+            gh release create "$TAG_NAME" \
+              --title "Release $TAG_NAME" \
+              --generate-notes \
+              --notes-start-tag "$PREVIOUS_TAG" \
+              ./bin/pocketbase-sdk-linux-amd64.tar.gz \
+              ./bin/pocketbase-sdk-linux-amd64.zip
+          else
+            echo "No previous tag found, creating release without previous tag reference"
+            gh release create "$TAG_NAME" \
+              --title "Release $TAG_NAME" \
+              --generate-notes \
+              ./bin/pocketbase-sdk-linux-amd64.tar.gz \
+              ./bin/pocketbase-sdk-linux-amd64.zip
+          fi
 
           # Add installation instructions to the release notes
           CURRENT_BODY=$(gh release view "$TAG_NAME" --json body --jq .body)
