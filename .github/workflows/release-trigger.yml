@@ -11,16 +11,18 @@ permissions:
 
 jobs:
   wait-for-ci:
-    name: Wait for CI/CD Pipeline
+    name: Wait for CI Pipeline
     runs-on: ubuntu-latest
     steps:
       - name: Wait for CI/CD workflow to complete
-        uses: lewagon/wait-on-check-action@v1.3.4
+        uses: lewagon/wait-on-check-action@v1.4.1
         with:
           ref: ${{ github.sha }}
-          check-name: "Workflow Summary" # This is the final job in main.yml
+          check-regexp: "^(Quality & security checks|Unit tests|Integration tests|Build|Workflow Summary)$"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 30 # Check every 30 seconds
+          verbose: true
+          allowed-conclusions: success,skipped
 
       - name: Log CI/CD completion
         run: |
