@@ -6,8 +6,8 @@ on:
       - main
 
 permissions:
-  contents: write  # Needed to create tags and releases
-  actions: write   # Needed to trigger other workflows
+  contents: write # Needed to create tags and releases
+  actions: write # Needed to trigger other workflows
 
 jobs:
   check-version-and-release:
@@ -90,7 +90,7 @@ jobs:
           # Push the tag to trigger release workflow
           echo "Pushing tag: $TAG_NAME"
           git push origin "$TAG_NAME"
-          
+
           # Wait a moment for the tag to be available
           sleep 2
 
@@ -108,3 +108,41 @@ jobs:
         run: |
           echo "Release process skipped - VERSION file was not changed in this push"
           echo "To trigger a release, update the VERSION file in a future commit"
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "# 🚀 Release Trigger Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.version-check.outputs.version_changed }}" == "true" ]; then
+            echo "## 📋 Version Change Detected" >> $GITHUB_STEP_SUMMARY
+            echo "- **Version**: ${{ steps.read-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Tag**: ${{ steps.read-version.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ steps.tag-check.outputs.tag_exists }}" == "false" ]; then
+              echo "## ✅ Release Status: Success" >> $GITHUB_STEP_SUMMARY
+              echo "- Tag **${{ steps.read-version.outputs.tag_name }}** created and pushed successfully" >> $GITHUB_STEP_SUMMARY
+              echo "- Release workflow will be triggered automatically" >> $GITHUB_STEP_SUMMARY
+              echo "- Check the [Releases](../../releases) page for the new release" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "## ❌ Release Status: Failed" >> $GITHUB_STEP_SUMMARY
+              echo "- Tag **${{ steps.read-version.outputs.tag_name }}** already exists" >> $GITHUB_STEP_SUMMARY
+              echo "- Please increment the version number in the VERSION file" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "## ⏭️ Release Status: Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "- No changes detected in VERSION file" >> $GITHUB_STEP_SUMMARY
+            echo "- To trigger a release, update the VERSION file and push to main" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📚 Next Steps" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.version-check.outputs.version_changed }}" == "true" ] && [ "${{ steps.tag-check.outputs.tag_exists }}" == "false" ]; then
+            echo "- Monitor the [Actions](../../actions) tab for the release build" >> $GITHUB_STEP_SUMMARY
+            echo "- The release will appear in [Releases](../../releases) when complete" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Update VERSION file to trigger a new release" >> $GITHUB_STEP_SUMMARY
+            echo "- Follow semantic versioning (major.minor.patch)" >> $GITHUB_STEP_SUMMARY
+          fi
