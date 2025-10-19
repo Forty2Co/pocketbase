@@ -41,9 +41,64 @@ This SDK doesn't have feature parity with official SDKs and supports the followi
 - **Delete**
 - **List** - with pagination, filtering, sorting
 - **Backups** - with create, restore, delete, upload, download and list all available downloads
+- **Real-time subscriptions** - Server-Sent Events (SSE) for live updates
+- **Type-safe collections** - Generic collection wrappers for better type safety
 - **Other** - feel free to create an issue or contribute
 
+### Package Organization
+
+The SDK is organized into focused sub-packages for better maintainability and clearer APIs:
+
+- **Root package** (`pocketbase`) - Main client, common types (`ResponseList`, `ResponseCreate`, `ParamsList`), and unified API
+- **Admin package** (`admin`) - Administrative operations (backups, files)
+- **Collections package** (`collections`) - Collection-specific operations and type-safe wrappers
+- **Realtime package** (`realtime`) - Server-Sent Events and live subscriptions
+- **Auth package** (`auth`) - Authentication strategies and token management
+
+**Key improvements:**
+- **Common types** are now centralized in `types.go` for consistency across packages
+- **Shared resources** - All sub-packages share the same HTTP client, authentication, and configuration
+- **Backward compatibility** - All existing code continues to work without changes
+- **Better organization** - Internal code is better structured while maintaining the same public API
+
 ### Usage & examples
+
+#### Client Instantiation
+
+The client instantiation remains the same as before - all existing code continues to work:
+
+```go
+client := pocketbase.NewClient("http://localhost:8090")
+
+// With authentication options:
+client := pocketbase.NewClient("http://localhost:8090", 
+    pocketbase.WithAdminEmailPassword("admin@admin.com", "password"))
+
+// With additional options:
+client := pocketbase.NewClient("http://localhost:8090",
+    pocketbase.WithTimeout(30*time.Second),
+    pocketbase.WithRestDebug(),
+    pocketbase.WithSseDebug())
+```
+
+#### Organized Sub-Package Access
+
+The SDK now has an organized internal structure with sub-packages that share the same HTTP client, authentication, and configuration. While the internal organization has improved, the public API remains the same for backward compatibility:
+
+```go
+client := pocketbase.NewClient("http://localhost:8090", 
+    pocketbase.WithAdminEmailPassword("admin@admin.com", "password"))
+
+// All existing methods work exactly as before
+err := client.Backup().Create("backup.zip")
+files := client.Files()
+collection := pocketbase.CollectionSet[MyStruct](client, "my_collection")
+stream, err := collection.Subscribe()
+```
+
+The internal sub-packages (`admin`, `collections`, `realtime`) provide better code organization and maintainability while ensuring all functionality shares the same underlying resources efficiently.
+
+#### Basic Operations
 
 Simple list example without authentication (assuming your collections are public):
 

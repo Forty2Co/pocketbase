@@ -14,6 +14,24 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// Client represents the realtime client functionality.
+type Client struct {
+	client     *resty.Client
+	url        string
+	authorizer Authorizer
+	sseDebug   bool
+}
+
+// NewClient creates a new realtime client with the provided HTTP client, URL, and authorizer.
+func NewClient(client *resty.Client, url string, authorizer Authorizer, sseDebug bool) *Client {
+	return &Client{
+		client:     client,
+		url:        url,
+		authorizer: authorizer,
+		sseDebug:   sseDebug,
+	}
+}
+
 // Event represents a real-time event from PocketBase with action, record data, and optional error.
 type Event[T any] struct {
 	Action string `json:"action"`

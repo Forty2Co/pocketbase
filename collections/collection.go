@@ -123,6 +123,16 @@ type Client struct {
 	sseDebug   bool
 }
 
+// NewClient creates a new collections client with the provided HTTP client, URL, and authorizer.
+func NewClient(client *resty.Client, url string, authorizer auth.Store, sseDebug bool) *Client {
+	return &Client{
+		client:     client,
+		url:        url,
+		authorizer: authorizer,
+		sseDebug:   sseDebug,
+	}
+}
+
 // Collection represents a type-safe wrapper around a PocketBase collection.
 type Collection[T any] struct {
 	Client             ClientInterface

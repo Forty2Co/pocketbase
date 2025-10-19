@@ -30,7 +30,12 @@ func main() {
 	// pocketbase.WithUserEmailPassword("user@user.com", "user@user.com")
 	// pocketbase.WithUserToken(token)
 	// pocketbase.WithAdminToken(token)
-	// pocketbase.WithDebug()
+	// pocketbase.WithRestDebug() // Enable HTTP request/response debugging
+	// pocketbase.WithSseDebug()  // Enable Server-Sent Events debugging
+	
+	// Note: The client now uses an organized internal structure with sub-packages
+	// (admin, collections, realtime) that share the same HTTP client and auth,
+	// but the API remains exactly the same for backward compatibility.
 
 	response, err := client.List("posts_public", pocketbase.ParamsList{
 		Size:    1,

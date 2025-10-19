@@ -42,6 +42,11 @@ type (
 		token      string
 		sseDebug   bool
 		restDebug  bool
+		
+		// Sub-package instances for organized functionality
+		Admin       *admin.Client
+		Realtime    *realtime.Client
+		Collections *collections.Client
 	}
 	// ClientOption is a function type for configuring Client instances.
 	ClientOption func(*Client)
@@ -66,6 +71,11 @@ func NewClient(url string, opts ...ClientOption) *Client {
 		url:        url,
 		authorizer: auth.NoOpAuth{},
 	}
+	
+	// Initialize sub-package clients (sharing the same HTTP client and auth)
+	c.Admin = admin.NewClient(c.client, c.url, c.authorizer)
+	c.Realtime = realtime.NewClient(c.client, c.url, c.authorizer, c.sseDebug)
+	c.Collections = collections.NewClient(c.client, c.url, c.authorizer, c.sseDebug)
 	opts = append([]ClientOption{}, opts...)
 	if EnvIsTruthy("REST_DEBUG") {
 		opts = append(opts, WithRestDebug())
@@ -77,6 +87,11 @@ func NewClient(url string, opts ...ClientOption) *Client {
 	for _, opt := range opts {
 		opt(c)
 	}
+	
+	// Update sub-package clients after options are applied (sharing resources)
+	c.Admin = admin.NewClient(c.client, c.url, c.authorizer)
+	c.Realtime = realtime.NewClient(c.client, c.url, c.authorizer, c.sseDebug)
+	c.Collections = collections.NewClient(c.client, c.url, c.authorizer, c.sseDebug)
 
 	return c
 }
@@ -442,14 +457,14 @@ func (c *Client) AuthStore() auth.Store {
 // Backup returns a Backup instance for managing backup operations.
 func (c *Client) Backup() admin.Backup {
 	return admin.Backup{
-		Client: admin.NewClient(c.client, c.url, c.authorizer),
+		Client: c.Admin,
 	}
 }
 
 // Files returns a Files instance for managing file operations.
 func (c *Client) Files() admin.Files {
 	return admin.Files{
-		Client: admin.NewClient(c.client, c.url, c.authorizer),
+		Client: c.Admin,
 	}
 }
 // Re-exports from realtime package for backward compatibility
@@ -466,12 +481,6 @@ type (
 type (
 	// Collection represents a type-safe wrapper around a PocketBase collection.
 	Collection[T any] = collections.Collection[T]
-	// ResponseList represents a paginated list response from PocketBase.
-	ResponseList[T any] = collections.ResponseList[T]
-	// ResponseCreate represents the response from creating a new record.
-	ResponseCreate = collections.ResponseCreate
-	// ParamsList represents query parameters for PocketBase API requests.
-	ParamsList = collections.ParamsList
 )
 
 // CollectionSet creates a new type-safe collection wrapper for the specified collection.
