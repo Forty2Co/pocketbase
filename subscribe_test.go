@@ -18,7 +18,7 @@ func TestCollection_Subscribe(t *testing.T) {
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
 	}
-	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/collectionname"}
+	collection := CollectionSet[map[string]any](client, migrations.PostsPublic)
 	stream, err := collection.Subscribe()
 	if err != nil {
 		t.Error(err)
@@ -86,7 +86,7 @@ func TestCollection_Unsubscribe(t *testing.T) {
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
 	}
-	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/collectionname"}
+	collection := CollectionSet[map[string]any](client, migrations.PostsPublic)
 	stream, err := collection.Subscribe()
 	if err != nil {
 		t.Error(err)
@@ -129,9 +129,8 @@ func TestCollection_RealtimeReconnect(t *testing.T) {
 			if err == nil {
 				// Simulate pocketbase closing realtime connection after 5m of inactivity
 				time.AfterFunc(3*time.Second, func() {
-					if closeErr := conn.Close(); closeErr != nil {
-						t.Logf("Failed to close connection: %v", closeErr)
-					}
+					// Close connection silently - don't log errors after test completion
+					conn.Close()
 				})
 			}
 			return conn, err
@@ -141,7 +140,7 @@ func TestCollection_RealtimeReconnect(t *testing.T) {
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
 	}
-	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/collectionname"}
+	collection := CollectionSet[map[string]any](client, migrations.PostsPublic)
 	stream, err := collection.Subscribe()
 	if err != nil {
 		t.Error(err)

@@ -23,6 +23,7 @@ import (
 
 	"github.com/Forty2Co/pocketbase/admin"
 	"github.com/Forty2Co/pocketbase/auth"
+	"github.com/Forty2Co/pocketbase/collections"
 	"github.com/Forty2Co/pocketbase/realtime"
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/go-resty/resty/v2"
@@ -392,8 +393,8 @@ func (c *Client) List(collection string, params ParamsList) (ResponseList[map[st
 	}
 
 	var responseRef any = &response
-	if params.hackResponseRef != nil {
-		responseRef = params.hackResponseRef
+	if params.HackResponseRef != nil {
+		responseRef = params.HackResponseRef
 	}
 	if err := json.Unmarshal(resp.Body(), responseRef); err != nil {
 		return response, fmt.Errorf("[list] can't unmarshal response, err %w", err)
@@ -460,3 +461,46 @@ type (
 	// SubscribeOptions configures real-time subscription behavior.
 	SubscribeOptions = realtime.SubscribeOptions
 )
+
+// Re-exports from collections package for backward compatibility
+type (
+	// Collection represents a type-safe wrapper around a PocketBase collection.
+	Collection[T any] = collections.Collection[T]
+	// ResponseList represents a paginated list response from PocketBase.
+	ResponseList[T any] = collections.ResponseList[T]
+	// ResponseCreate represents the response from creating a new record.
+	ResponseCreate = collections.ResponseCreate
+	// ParamsList represents query parameters for PocketBase API requests.
+	ParamsList = collections.ParamsList
+)
+
+// CollectionSet creates a new type-safe collection wrapper for the specified collection.
+// This is a convenience function that wraps the collections.CollectionSet function.
+func CollectionSet[T any](client *Client, collection string) *collections.Collection[T] {
+	return collections.CollectionSet[T](client, collection)
+}
+
+// GetClient returns the underlying HTTP client for interface compatibility.
+func (c *Client) GetClient() *resty.Client {
+	return c.client
+}
+
+// GetURL returns the base URL for interface compatibility.
+func (c *Client) GetURL() string {
+	return c.url
+}
+
+// IsSSEDebugEnabled returns whether SSE debug is enabled for interface compatibility.
+func (c *Client) IsSSEDebugEnabled() bool {
+	return c.sseDebug
+}
+
+// SetToken sets the authentication token for the client.
+func (c *Client) SetToken(token string) {
+	c.token = token
+}
+
+// GetToken returns the authentication token for the client.
+func (c *Client) GetToken() string {
+	return c.token
+}
