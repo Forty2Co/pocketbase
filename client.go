@@ -261,10 +261,9 @@ func (c *Client) Create(collection string, body any) (ResponseCreate, error) {
 	}
 
 	if resp.IsError() {
-		return response, fmt.Errorf("[create] pocketbase returned status: %d, msg: %s, body: %s, err %w",
+		return response, fmt.Errorf("[create] pocketbase returned status: %d, msg: %s, err %w",
 			resp.StatusCode(),
 			resp.String(),
-			fmt.Sprintf("%+v", body), // TODO remove that after debugging
 			ErrInvalidResponse,
 		)
 	}
@@ -467,6 +466,28 @@ func (c *Client) Files() admin.Files {
 		Client: c.Admin,
 	}
 }
+// Re-exports from auth package for backward compatibility
+type (
+	// Store represents an authentication store that manages tokens and validation.
+	Store = auth.Store
+	// Authorizer handles the authorization process.
+	Authorizer = auth.Authorizer
+	// EmailPasswordAuth handles email/password authentication.
+	EmailPasswordAuth = auth.EmailPasswordAuth
+	// TokenAuth handles token-based authentication.
+	TokenAuth = auth.TokenAuth
+	// NoOpAuth is a no-operation authenticator that always returns empty/invalid values.
+	NoOpAuth = auth.NoOpAuth
+)
+
+// Re-exported auth functions for backward compatibility
+var (
+	// NewEmailPasswordAuth creates a new email/password authenticator.
+	NewEmailPasswordAuth = auth.NewEmailPasswordAuth
+	// NewTokenAuth creates a new token-based authenticator.
+	NewTokenAuth = auth.NewTokenAuth
+)
+
 // Re-exports from realtime package for backward compatibility
 type (
 	// Event represents a real-time event from PocketBase.
@@ -475,12 +496,67 @@ type (
 	Stream[T any] = realtime.Stream[T]
 	// SubscribeOptions configures real-time subscription behavior.
 	SubscribeOptions = realtime.SubscribeOptions
+	// CollectionSubscriber provides subscription methods for collections.
+	CollectionSubscriber[T any] = realtime.CollectionSubscriber[T]
+)
+
+// Re-exported realtime functions for backward compatibility
+
+// Subscribe creates a real-time subscription to the collection with default options.
+func Subscribe[T any](c realtime.Collection[T], targets ...string) (*realtime.Stream[T], error) {
+	return realtime.Subscribe[T](c, targets...)
+}
+
+// SubscribeWith creates a real-time subscription with custom options and target collections.
+func SubscribeWith[T any](c realtime.Collection[T], opts realtime.SubscribeOptions, targets ...string) (*realtime.Stream[T], error) {
+	return realtime.SubscribeWith[T](c, opts, targets...)
+}
+
+// NewCollectionSubscriber creates a new subscriber for the given collection.
+func NewCollectionSubscriber[T any](c realtime.Collection[T]) *realtime.CollectionSubscriber[T] {
+	return realtime.NewCollectionSubscriber[T](c)
+}
+
+// Re-exports from admin package for backward compatibility
+type (
+	// Backup provides methods for managing PocketBase backup operations.
+	Backup = admin.Backup
+	// Files provides methods for managing PocketBase file operations.
+	Files = admin.Files
+	// ResponseBackupFullList represents a backup file in the backup list response.
+	ResponseBackupFullList = admin.ResponseBackupFullList
+	// ResponseGetToken represents the response from requesting a file access token.
+	ResponseGetToken = admin.ResponseGetToken
+	// CreateRequest represents the request structure for creating a backup.
+	CreateRequest = admin.CreateRequest
+)
+
+// Re-exported admin functions for backward compatibility
+var (
+	// GetZIPName ensures a backup name has a .zip extension and is lowercase.
+	GetZIPName = admin.GetZIPName
 )
 
 // Re-exports from collections package for backward compatibility
 type (
 	// Collection represents a type-safe wrapper around a PocketBase collection.
 	Collection[T any] = collections.Collection[T]
+	// AuthMethod represents the available authentication methods for a collection.
+	AuthMethod = collections.AuthMethod
+	// AuthProvider represents an OAuth2 authentication provider configuration.
+	AuthProvider = collections.AuthProvider
+	// AuthWithPasswordResponse represents the response from password authentication.
+	AuthWithPasswordResponse = collections.AuthWithPasswordResponse
+	// Record represents a PocketBase record with common fields.
+	Record = collections.Record
+	// AuthWithOauth2Response represents the response from OAuth2 authentication.
+	AuthWithOauth2Response = collections.AuthWithOauth2Response
+	// AuthRefreshResponse represents the response from authentication token refresh.
+	AuthRefreshResponse = collections.AuthRefreshResponse
+	// ExternalAuthRequest represents an external authentication provider link.
+	ExternalAuthRequest = collections.ExternalAuthRequest
+	// AuthMethodsResponse represents the response structure for authentication methods.
+	AuthMethodsResponse = collections.AuthMethodsResponse
 )
 
 // CollectionSet creates a new type-safe collection wrapper for the specified collection.
