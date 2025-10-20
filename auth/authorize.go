@@ -1,4 +1,4 @@
-package pocketbase
+package auth
 
 import (
 	"fmt"
@@ -8,31 +8,35 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-type authStore interface {
-	authorizer
+// Store represents an authentication store that manages tokens and validation
+type Store interface {
+	Authorizer
 	IsValid() bool
 	Token() string
 }
 
-type authorizer interface {
-	authorize() error
+// Authorizer handles the authorization process
+type Authorizer interface {
+	Authorize() error
 }
 
-type authorizeNoOp struct{}
+// NoOpAuth is a no-operation authenticator that always returns empty/invalid values
+type NoOpAuth struct{}
 
-func (a authorizeNoOp) authorize() error {
+func (a NoOpAuth) Authorize() error {
 	return nil
 }
 
-func (a authorizeNoOp) IsValid() bool {
+func (a NoOpAuth) IsValid() bool {
 	return false
 }
 
-func (a authorizeNoOp) Token() string {
+func (a NoOpAuth) Token() string {
 	return ""
 }
 
-type authorizeEmailPassword struct {
+// EmailPasswordAuth handles email/password authentication
+type EmailPasswordAuth struct {
 	email       string
 	password    string
 	token       string
@@ -42,8 +46,9 @@ type authorizeEmailPassword struct {
 	tokenSingle singleflight.Group
 }
 
-func newAuthorizeEmailPassword(c *resty.Client, url string, email string, password string) authStore {
-	return &authorizeEmailPassword{
+// NewEmailPasswordAuth creates a new email/password authenticator
+func NewEmailPasswordAuth(c *resty.Client, url string, email string, password string) Store {
+	return &EmailPasswordAuth{
 		client:      c,
 		email:       email,
 		password:    password,
@@ -52,7 +57,7 @@ func newAuthorizeEmailPassword(c *resty.Client, url string, email string, passwo
 	}
 }
 
-func (a *authorizeEmailPassword) authorize() error {
+func (a *EmailPasswordAuth) Authorize() error {
 	type authResponse struct {
 		Token string `json:"token"`
 	}
@@ -94,10 +99,10 @@ func (a *authorizeEmailPassword) authorize() error {
 	return err
 }
 
-func (a *authorizeEmailPassword) IsValid() bool {
+func (a *EmailPasswordAuth) IsValid() bool {
 	return time.Now().Before(a.tokenValid)
 }
 
-func (a *authorizeEmailPassword) Token() string {
+func (a *EmailPasswordAuth) Token() string {
 	return a.token
 }

@@ -1,12 +1,47 @@
-package pocketbase
+package admin
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
 	"strings"
+
+	"github.com/go-resty/resty/v2"
 )
+
+// ErrInvalidResponse is returned when PocketBase returns an invalid response.
+var ErrInvalidResponse = errors.New("invalid response")
+
+// Client represents the admin client interface needed by admin operations.
+type Client struct {
+	client     *resty.Client
+	url        string
+	authorizer Authorizer
+}
+
+// Authorizer interface for authentication operations.
+type Authorizer interface {
+	Authorize() error
+}
+
+// NewClient creates a new admin client with the provided HTTP client, URL, and authorizer.
+func NewClient(client *resty.Client, url string, authorizer Authorizer) *Client {
+	return &Client{
+		client:     client,
+		url:        url,
+		authorizer: authorizer,
+	}
+}
+
+// Authorize performs authentication using the configured authorization method.
+func (c *Client) Authorize() error {
+	if c.authorizer != nil {
+		return c.authorizer.Authorize()
+	}
+	return nil
+}
 
 type (
 	// Backup provides methods for managing PocketBase backup operations.
@@ -200,10 +235,15 @@ func (b Backup) GetDownloadURL(token string, key string) (string, error) {
 	return u.String(), nil
 }
 
-func getZIPName(backupName string) string {
+// GetZIPName ensures a backup name has a .zip extension and is lowercase.
+func GetZIPName(backupName string) string {
 	zipName := strings.ToLower(backupName)
 	if !strings.Contains(zipName, ".zip") {
 		zipName = zipName + ".zip"
 	}
 	return zipName
+}
+
+func getZIPName(backupName string) string {
+	return GetZIPName(backupName)
 }

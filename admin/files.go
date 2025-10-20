@@ -1,4 +1,4 @@
-package pocketbase
+package admin
 
 import (
 	"encoding/json"
