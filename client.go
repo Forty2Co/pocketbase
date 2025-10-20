@@ -3,15 +3,49 @@
 // This package offers type-safe, idiomatic Go interfaces for PocketBase operations
 // including authentication, CRUD operations, real-time subscriptions, and backup management.
 //
-// Example usage:
+// # Package Organization
+//
+// The SDK is organized into focused sub-packages for better maintainability:
+//
+//   - Root package (pocketbase): Main client, common types, unified API
+//   - Admin package (admin): Administrative operations (backups, files)
+//   - Collections package (collections): Collection operations and type-safe wrappers
+//   - Realtime package (realtime): Server-Sent Events and live subscriptions
+//   - Auth package (auth): Authentication strategies and token management
+//
+// # Usage Patterns
+//
+// Unified Client Approach (Backward Compatible):
 //
 //	client := pocketbase.NewClient("http://localhost:8090")
 //	records, err := client.List("posts", pocketbase.ParamsList{})
-//
-// For type-safe operations, use CollectionSet:
-//
+//	
+//	// Type-safe collections
 //	collection := pocketbase.CollectionSet[MyStruct](client, "posts")
 //	records, err := collection.List(pocketbase.ParamsList{})
+//
+// Modular Sub-Package Approach:
+//
+//	client := pocketbase.NewClient("http://localhost:8090")
+//	
+//	// Use collections sub-package directly
+//	collection := collections.CollectionSet[MyStruct](client.Collections, "posts")
+//	records, err := collection.List(pocketbase.ParamsList{})
+//	
+//	// Use admin operations
+//	backup := admin.Backup{Client: client.Admin}
+//	err := backup.Create("backup.zip")
+//
+// # Backward Compatibility
+//
+// All existing code continues to work without changes. The package maintains
+// full backward compatibility by re-exporting all public types and functions
+// from sub-packages in the root package.
+//
+// # Shared Resources
+//
+// All sub-packages share the same HTTP client, authentication, and configuration
+// for efficient resource usage and consistent behavior across the SDK.
 package pocketbase
 
 import (

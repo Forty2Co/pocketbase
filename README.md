@@ -47,19 +47,45 @@ This SDK doesn't have feature parity with official SDKs and supports the followi
 
 ### Package Organization
 
-The SDK is organized into focused sub-packages for better maintainability and clearer APIs:
+The SDK has been restructured into focused sub-packages for better maintainability, clearer APIs, and improved code organization while maintaining full backward compatibility.
+
+#### Package Structure
 
 - **Root package** (`pocketbase`) - Main client, common types (`ResponseList`, `ResponseCreate`, `ParamsList`), and unified API
 - **Admin package** (`admin`) - Administrative operations (backups, files)
-- **Collections package** (`collections`) - Collection-specific operations and type-safe wrappers
+- **Collections package** (`collections`) - Collection-specific operations and type-safe wrappers  
 - **Realtime package** (`realtime`) - Server-Sent Events and live subscriptions
 - **Auth package** (`auth`) - Authentication strategies and token management
 
-**Key improvements:**
-- **Common types** are now centralized in `types.go` for consistency across packages
-- **Shared resources** - All sub-packages share the same HTTP client, authentication, and configuration
-- **Backward compatibility** - All existing code continues to work without changes
-- **Better organization** - Internal code is better structured while maintaining the same public API
+#### Key Benefits
+
+- **Backward Compatibility** - All existing code continues to work without changes
+- **Modular Design** - Import only the packages you need for focused functionality
+- **Shared Resources** - All sub-packages share the same HTTP client, authentication, and configuration
+- **Better Organization** - Clear separation of concerns with logical grouping of functionality
+- **Type Safety** - Enhanced type safety with dedicated collection wrappers
+- **Consistent APIs** - Unified patterns across all packages
+- **Maintainability** - Easier to locate, modify, and test specific functionality
+- **Performance** - No overhead from restructuring - same efficient resource usage
+
+#### Migration Guide
+
+**No migration required!** Your existing code will continue to work exactly as before:
+
+```go
+// This continues to work unchanged
+client := pocketbase.NewClient("http://localhost:8090")
+records, err := client.List("posts", pocketbase.ParamsList{})
+```
+
+**Optional: Adopt modular approach** for new code or when refactoring:
+
+```go
+// New modular approach (optional)
+client := pocketbase.NewClient("http://localhost:8090")
+collection := collections.CollectionSet[Post](client.Collections, "posts")
+records, err := collection.List(pocketbase.ParamsList{})
+```
 
 ### Usage & examples
 
@@ -81,9 +107,13 @@ client := pocketbase.NewClient("http://localhost:8090",
     pocketbase.WithSseDebug())
 ```
 
-#### Organized Sub-Package Access
+#### Usage Approaches
 
-The SDK now has an organized internal structure with sub-packages that share the same HTTP client, authentication, and configuration. While the internal organization has improved, the public API remains the same for backward compatibility:
+The SDK supports two usage patterns - choose the one that best fits your needs:
+
+**1. Unified Client Approach (Recommended for most users)**
+
+The traditional approach where all functionality is accessed through the main client:
 
 ```go
 client := pocketbase.NewClient("http://localhost:8090", 
@@ -96,7 +126,34 @@ collection := pocketbase.CollectionSet[MyStruct](client, "my_collection")
 stream, err := collection.Subscribe()
 ```
 
-The internal sub-packages (`admin`, `collections`, `realtime`) provide better code organization and maintainability while ensuring all functionality shares the same underlying resources efficiently.
+**2. Modular Sub-Package Approach (For focused functionality)**
+
+Import and use specific sub-packages for more targeted functionality:
+
+```go
+import (
+    "github.com/Forty2Co/pocketbase"
+    "github.com/Forty2Co/pocketbase/admin"
+    "github.com/Forty2Co/pocketbase/collections"
+)
+
+client := pocketbase.NewClient("http://localhost:8090")
+
+// Use collections sub-package directly
+collection := collections.CollectionSet[MyStruct](client.Collections, "my_collection")
+records, err := collection.List(pocketbase.ParamsList{})
+
+// Use admin sub-package directly  
+backup := admin.Backup{Client: client.Admin}
+err := backup.Create("backup.zip")
+```
+
+Both approaches share the same underlying HTTP client, authentication, and configuration for efficient resource usage.
+
+**When to use each approach:**
+
+- **Unified Client**: Best for most applications, simpler imports, backward compatibility
+- **Modular Sub-Packages**: Best for large applications, when you need only specific functionality, or when building libraries that depend on PocketBase
 
 #### Basic Operations
 
@@ -351,13 +408,95 @@ func main() {
 }
 ```
 
+### Package-Specific Usage
+
+#### Collections Package
+
+For type-safe collection operations with enhanced functionality:
+
+```go
+import "github.com/Forty2Co/pocketbase/collections"
+
+// Create type-safe collection wrapper
+users := collections.CollectionSet[User](client.Collections, "users")
+
+// All collection operations with type safety
+response, err := users.List(pocketbase.ParamsList{Size: 10})
+user, err := users.Create(User{Name: "John", Email: "john@example.com"})
+err = users.Update(user.ID, User{Name: "John Doe"})
+err = users.Delete(user.ID)
+
+// Authentication methods for user collections
+authResponse, err := users.AuthWithPassword("john@example.com", "password")
+methods, err := users.AuthMethods()
+```
+
+#### Admin Package
+
+For administrative operations (requires admin authentication):
+
+```go
+import "github.com/Forty2Co/pocketbase/admin"
+
+// Backup operations
+backup := admin.Backup{Client: client.Admin}
+err := backup.Create("my_backup.zip")
+backups, err := backup.FullList()
+err = backup.Delete("old_backup.zip")
+
+// File operations
+files := admin.Files{Client: client.Admin}
+token, err := files.GetToken()
+```
+
+#### Realtime Package
+
+For Server-Sent Events and live subscriptions:
+
+```go
+import "github.com/Forty2Co/pocketbase/realtime"
+
+// Subscribe to collection changes
+collection := collections.CollectionSet[Post](client.Collections, "posts")
+stream, err := collection.Subscribe()
+if err != nil {
+    log.Fatal(err)
+}
+defer stream.Unsubscribe()
+
+// Wait for connection and handle events
+<-stream.Ready()
+for event := range stream.Events() {
+    log.Printf("Event: %s, Record: %+v", event.Action, event.Record)
+}
+```
+
+#### Auth Package
+
+For custom authentication strategies:
+
+```go
+import "github.com/Forty2Co/pocketbase/auth"
+
+// Create custom authenticators
+emailAuth := auth.NewEmailPasswordAuth(client.GetClient(), "http://localhost:8090/api/collections/users/auth-with-password", "user@example.com", "password")
+tokenAuth := auth.NewTokenAuth(client.GetClient(), "http://localhost:8090/api/collections/users/auth-refresh", "your-token")
+
+// Use with client
+client := pocketbase.NewClient("http://localhost:8090")
+// Set custom auth store if needed
+```
+
+### Examples and Testing
+
 More examples can be found in:
 
-- [example file](./example/main.go)
-- [tests for the client](./client_test.go)
-- [tests for the collection](./collection_test.go)
-- remember to start the Pocketbase before running examples with `make serve` command
-- for integration tests, you can use `make test-integration` which automatically manages the server
+- [Unified usage example](./example/main.go) - Traditional approach with both unified and modular examples
+- [Modular usage example](./example/modular_usage.go) - Focused sub-package usage examples
+- [Client tests](./client_test.go) - Comprehensive client functionality tests
+- [Collection tests](./collections/collection_test.go) - Type-safe collection operation tests
+- Remember to start PocketBase before running examples with `make serve` command
+- For integration tests, use `make test-integration` which automatically manages the server
 
 ## Development
 

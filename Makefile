@@ -102,7 +102,19 @@ test: ## Run tests (requires PocketBase server running on :8090)
 	@go test -shuffle=on -race ./...
 
 test-unit: ## Run unit tests only (short mode)
-	@go test -shuffle=on -race -short ./...
+	@echo "Running unit tests..."
+	@go test -shuffle=on -race -short ./... 2>&1 | tee /tmp/test_unit_output.log || TEST_RESULT=$$?; \
+	echo "========================================"; \
+	echo "❗❗ Unit Test Summary ❗❗"; \
+	echo "📦 Packages tested: $$(grep -c '^ok\|^FAIL' /tmp/test_unit_output.log)"; \
+	echo "⭐ Passed: $$(grep -c '^ok' /tmp/test_unit_output.log)"; \
+	echo "❌ Failed: $$(grep -c '^FAIL' /tmp/test_unit_output.log)"; \
+	if grep -q '^FAIL' /tmp/test_unit_output.log; then \
+		echo "Failed packages:"; \
+		grep '^FAIL' /tmp/test_unit_output.log | sed 's/^FAIL[[:space:]]*//'; \
+	fi; \
+	rm -f /tmp/test_unit_output.log; \
+	exit $${TEST_RESULT:-0}
 
 test-integration: build ## Run integration tests with automatic server management
 	@echo "Starting integration tests with automatic server management..."
